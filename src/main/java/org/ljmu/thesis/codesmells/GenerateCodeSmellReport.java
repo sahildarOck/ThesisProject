@@ -1,9 +1,9 @@
 package org.ljmu.thesis.codesmells;
 
-import org.ljmu.thesis.codesmells.git.GitHelper;
-import org.ljmu.thesis.codesmells.json.JsonHelper;
+import org.ljmu.thesis.codesmells.helpers.GitHelper;
+import org.ljmu.thesis.commons.JsonHelper;
 import org.ljmu.thesis.codesmells.model.PmdReport;
-import org.ljmu.thesis.codesmells.pmd.PmdHelper;
+import org.ljmu.thesis.codesmells.helpers.PmdHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,17 +15,21 @@ public class GenerateCodeSmellReport {
     private static final String PROJECT_PATH = File.separator + "Users" + File.separator + "srivastavas" + File.separator + "Downloads" + File.separator + "M.Sc."
             + File.separator + "datasets" + File.separator + "CROP_dataset" + File.separator + "git_repos" + File.separator + "eclipse.platform.ui";
     private static String filePath = File.separator + "tests" + File.separator + "org.eclipse.ui.tests.harness" + File.separator + "src" + File.separator + "org"
-            + File.separator + "eclipse" + File.separator + "ui" + File.separator + "tests" + File.separator + "harness" + File.separator + "util" ;
+            + File.separator + "eclipse" + File.separator + "ui" + File.separator + "tests" + File.separator + "harness" + File.separator + "util";
 
-    private static String beforeCommitId = "55fcccbfd6bcbfade0a387fda2ecc490a61475eb";
-    private static String afterCommitId = "5556b634389127039c0200c9657fad698133b1bf";
+    private static String filePath2 = File.separator + "bundles" + File.separator + "org.eclipse.e4.ui.workbench.renderers.swt" + File.separator + "src" + File.separator + "org"
+            + File.separator + "eclipse" + File.separator + "e4" + File.separator + "ui" + File.separator + "workbench" + File.separator + "renderers" + File.separator + "swt" + File.separator + "MenuManagerRenderer.java";
+
+    private static String beforeCommitId = "6ee8a8ba9bb2e56baf6c808d533c67530cbc94c9";
+    private static String afterCommitId = "29102800c7e57a7c6d29097ee54e3204f5de42e2";
 
     public static void main(String[] args) throws IOException {
-        int initialSmellsCount = getSmellsCount(beforeCommitId, filePath);
-        int finalSmellsCount = getSmellsCount(afterCommitId, filePath);
-
+        int initialSmellsCount = getSmellsCount(beforeCommitId, filePath2);
         LOGGER.info(String.format("Initial Smells Count: %d", initialSmellsCount));
+
+        int finalSmellsCount = getSmellsCount(afterCommitId, filePath2);
         LOGGER.info(String.format("Final Smells Count: %d", finalSmellsCount));
+
         LOGGER.info(String.format("Is Increased: %s", finalSmellsCount > initialSmellsCount));
     }
 

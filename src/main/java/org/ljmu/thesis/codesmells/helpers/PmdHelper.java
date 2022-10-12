@@ -1,6 +1,4 @@
-package org.ljmu.thesis.codesmells.pmd;
-
-import org.ljmu.thesis.codesmells.processbuilder.ProcessBuilderHelper;
+package org.ljmu.thesis.codesmells.helpers;
 
 import java.io.File;
 import java.io.IOException;

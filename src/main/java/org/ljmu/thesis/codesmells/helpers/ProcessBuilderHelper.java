@@ -1,4 +1,4 @@
-package org.ljmu.thesis.codesmells.processbuilder;
+package org.ljmu.thesis.codesmells.helpers;
 
 import org.apache.commons.io.IOUtils;
 

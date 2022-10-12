@@ -1,6 +1,4 @@
-package org.ljmu.thesis.codesmells.git;
-
-import org.ljmu.thesis.codesmells.processbuilder.ProcessBuilderHelper;
+package org.ljmu.thesis.codesmells.helpers;
 
 import java.io.IOException;
 import java.util.Arrays;
