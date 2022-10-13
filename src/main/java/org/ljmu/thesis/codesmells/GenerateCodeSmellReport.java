@@ -34,8 +34,11 @@ public class GenerateCodeSmellReport {
     private static int getSmellsCount(String commitId, String filePath) throws IOException {
         String gitCheckoutOutput = GitHelper.checkout(PROJECT_PATH, commitId);
         LOGGER.info(String.format("Git checkout Output: %s", gitCheckoutOutput));
-        String outputJson = PmdHelper.startPmdCodeSmellProcess(PROJECT_PATH, filePath);
+        String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(PROJECT_PATH, filePath);
 //        LOGGER.info(outputJson);
+        if(outputJson.contains("No such file")) {
+            return 0;
+        }
         PmdReport report = JsonHelper.getObject(outputJson, PmdReport.class);
         return Arrays.stream(report.files).map(file -> file.violations.length).reduce(0, (len1, len2) -> len1 + len2);
     }

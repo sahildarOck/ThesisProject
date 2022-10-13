@@ -7,7 +7,7 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 
-public class RestHelper {
+public class ApiHelper {
     public static String get(String uri) throws IOException {
         HttpGet request = new HttpGet(uri);
         try (CloseableHttpResponse response = HttpClients.createDefault().execute(request)) {

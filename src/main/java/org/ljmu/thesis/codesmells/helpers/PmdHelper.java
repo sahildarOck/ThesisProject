@@ -11,8 +11,8 @@ public class PmdHelper {
             + File.separator + "Downloads" + File.separator + "M.Sc." + File.separator + "pmd-bin-6.50.0" + File.separator + "bin";
     private static final String CODE_SMELLS_RULES_FILE_PATH = Paths.get("src", "main", "resources", "CodeSmellRules.xml").toAbsolutePath().toString();
 
-    public static String startPmdCodeSmellProcess(String projectPath, String filePath) throws IOException {
-        return ProcessBuilderHelper.startProcess(PMD_BIN_PATH, getPmdCommands(projectPath, filePath));
+    public static String startPmdCodeSmellProcessAndGetOutput(String projectPath, String filePath) throws IOException {
+        return ProcessBuilderHelper.startProcessAndGetOutput(PMD_BIN_PATH, getPmdCommands(projectPath, filePath));
     }
 
     private static List<String> getPmdCommands(String projectPath, String filePath) {

@@ -8,6 +8,6 @@ public class GitHelper {
 
     public static String checkout(String projectPath, String commitId) throws IOException {
         List<String> commands = Arrays.asList("git", "checkout", commitId);
-        return ProcessBuilderHelper.startProcess(projectPath, commands);
+        return ProcessBuilderHelper.startProcessAndGetOutput(projectPath, commands);
     }
 }

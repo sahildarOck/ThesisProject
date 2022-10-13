@@ -5,8 +5,6 @@ import org.apache.commons.io.IOUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 
 public class ProcessBuilderHelper {
@@ -15,7 +13,7 @@ public class ProcessBuilderHelper {
 //
 //    }
 
-    public static String startProcess(String workingDirectory, List<String> command) throws IOException {
+    public static String startProcessAndGetOutput(String workingDirectory, List<String> command) throws IOException {
         File file = new File(workingDirectory);
 
         ProcessBuilder pb = new ProcessBuilder(command);
