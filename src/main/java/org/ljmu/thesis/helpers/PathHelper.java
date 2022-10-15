@@ -28,4 +28,9 @@ public class PathHelper {
         Config config = getConfig();
         return config.path.pmdBin;
     }
+
+    public static String getOutputFilePath() throws IOException {
+        Config config = getConfig();
+        return config.path.outputFile;
+    }
 }

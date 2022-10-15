@@ -8,8 +8,8 @@ import org.ljmu.thesis.model.crsmells.GetChangeRevisionCommitOutput;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-public class GenerateCRSmellReport {
-    private static final Logger LOGGER = Logger.getLogger(GenerateCRSmellReport.class.getName());
+public class PopulateCRSmellData {
+    private static final Logger LOGGER = Logger.getLogger(PopulateCRSmellData.class.getName());
 
     private static String changeId = "Id3b90536d6f7afbcbfb5bc3a4cca8bff1df53627";
 
