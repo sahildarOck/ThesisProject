@@ -1,4 +1,4 @@
-package org.ljmu.thesis.crsmells.helpers;
+package org.ljmu.thesis.helpers.crsmells;
 
 import java.io.IOException;
 

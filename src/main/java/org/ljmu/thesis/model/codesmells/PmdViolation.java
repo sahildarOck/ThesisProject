@@ -1,8 +1,7 @@
-package org.ljmu.thesis.crsmells.model;
+package org.ljmu.thesis.model.codesmells;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Reviewers {
-    public Developer[] REVIEWER;
+public class PmdViolation {
 }

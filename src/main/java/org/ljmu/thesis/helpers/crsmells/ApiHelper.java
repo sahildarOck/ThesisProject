@@ -1,4 +1,4 @@
-package org.ljmu.thesis.crsmells.helpers;
+package org.ljmu.thesis.helpers.crsmells;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;

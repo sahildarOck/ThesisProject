@@ -1,4 +1,4 @@
-package org.ljmu.thesis.codesmells.model;
+package org.ljmu.thesis.model.codesmells;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

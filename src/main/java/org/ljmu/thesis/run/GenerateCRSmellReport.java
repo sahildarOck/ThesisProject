@@ -1,9 +1,9 @@
-package org.ljmu.thesis.crsmells;
+package org.ljmu.thesis.run;
 
-import org.ljmu.thesis.commons.JsonHelper;
-import org.ljmu.thesis.crsmells.helpers.GerritApiHelper;
-import org.ljmu.thesis.crsmells.model.GetChangeDetailOutput;
-import org.ljmu.thesis.crsmells.model.GetChangeRevisionCommitOutput;
+import org.ljmu.thesis.helpers.JsonHelper;
+import org.ljmu.thesis.helpers.crsmells.GerritApiHelper;
+import org.ljmu.thesis.model.crsmells.GetChangeDetailOutput;
+import org.ljmu.thesis.model.crsmells.GetChangeRevisionCommitOutput;
 
 import java.io.IOException;
 import java.util.logging.Logger;

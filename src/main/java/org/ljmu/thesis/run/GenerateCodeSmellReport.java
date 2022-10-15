@@ -1,9 +1,9 @@
-package org.ljmu.thesis.codesmells;
+package org.ljmu.thesis.run;
 
-import org.ljmu.thesis.codesmells.helpers.GitHelper;
-import org.ljmu.thesis.commons.JsonHelper;
-import org.ljmu.thesis.codesmells.model.PmdReport;
-import org.ljmu.thesis.codesmells.helpers.PmdHelper;
+import org.ljmu.thesis.helpers.codesmells.GitHelper;
+import org.ljmu.thesis.helpers.JsonHelper;
+import org.ljmu.thesis.model.codesmells.PmdReport;
+import org.ljmu.thesis.helpers.codesmells.PmdHelper;
 
 import java.io.File;
 import java.io.IOException;

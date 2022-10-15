@@ -1,4 +1,4 @@
-package org.ljmu.thesis.codesmells.helpers;
+package org.ljmu.thesis.helpers.codesmells;
 
 import java.io.IOException;
 import java.util.Arrays;

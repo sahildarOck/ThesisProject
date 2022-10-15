@@ -1,0 +1,19 @@
+{
+  "_readMe": "Please update the fields: 'projectToRun' for the project to be run and 'path.cropDataset' for the path of the CROP_dataset",
+  "projectToRun": "couchbase-java-client",
+  "path": {
+    "cropDataset": "/Users/srivastavas/Downloads/M.Sc./datasets/CROP_dataset",
+    "gitRepos": "/git_repos",
+    "metadata": "/metadata",
+    "codeSmellRules": "/src/main/resources/CodeSmellRules.xml",
+    "output": "/src/main/resources"
+  },
+  "projects": [
+    "couchbase-java-client",
+    "couchbase-jvm-core",
+    "eclipse.platform.ui",
+    "egit",
+    "jgit",
+    "spymemcached"
+  ]
+}
