@@ -5,19 +5,18 @@ import org.ljmu.thesis.model.Config;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 public class RuntimeConfig {
-    private static final String CONFIG_FILE_PATH = "/src/main/resources/config.json";
+    private static final String CONFIG_FILE_PATH = Paths.get("src", "main", "resources", "config.json").toAbsolutePath().toString();
 
-    private File configFile;
-    private Config config;
+    private static Config config;
 
-    public RuntimeConfig() throws IOException {
-        configFile = new File(CONFIG_FILE_PATH);
-        config = JsonHelper.getObject(configFile, Config.class);
-    }
-
-    public Config getConfig() {
+    public static Config getConfig() throws IOException {
+        if (config == null) {
+            File configFile = new File(CONFIG_FILE_PATH);
+            config = JsonHelper.getObject(configFile, Config.class);
+        }
         return config;
     }
 }

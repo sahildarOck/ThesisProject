@@ -3,7 +3,6 @@ package org.ljmu.thesis.helpers.crsmells;
 import java.io.IOException;
 
 public class GerritApiHelper {
-
     public static String getChangeDetail(String changeId) throws IOException {
         String uri = String.format("https://git.eclipse.org/r/changes/%s/detail", changeId);
         return ApiHelper.get(uri);

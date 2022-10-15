@@ -11,7 +11,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class JsonHelper {
-
     public static <T> T getObject(String json, Class<T> obj) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         return (T) objectMapper.readValue(json, obj);
