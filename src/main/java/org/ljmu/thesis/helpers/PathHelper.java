@@ -19,8 +19,9 @@ public class PathHelper {
         return config.path.cropDataset + config.path.metadata + File.separator + config.projectToRun;
     }
 
-    public static String getCodeSmellRulesFilePath() {
-        return Paths.get("src", "main", "resources", "CodeSmellRules.xml").toAbsolutePath().toString();
+    public static String getCodeSmellRulesFilePath() throws IOException {
+        Config config = getConfig();
+        return Paths.get(config.path.codeSmellRules).toAbsolutePath().toString();
     }
 
     public static String getPmdBinPath() throws IOException {

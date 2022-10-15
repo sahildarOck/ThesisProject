@@ -6,8 +6,8 @@
     "cropDataset": "/Users/srivastavas/Downloads/M.Sc./datasets/CROP_dataset",
     "gitRepos": "/git_repos",
     "metadata": "/metadata",
-    "codeSmellRules": "/src/main/resources/CodeSmellRules.xml",
-    "output": "/src/main/resources"
+    "codeSmellRules": "src/main/resources/CodeSmellRules.xml",
+    "output": "src/main/resources"
   },
   "projects": [
     "couchbase-java-client",

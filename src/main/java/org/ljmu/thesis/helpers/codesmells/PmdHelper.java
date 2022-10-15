@@ -11,7 +11,7 @@ public class PmdHelper {
         return ProcessBuilderHelper.startProcessAndGetOutput(PathHelper.getPmdBinPath(), getPmdCommands(projectPath, filePath));
     }
 
-    private static List<String> getPmdCommands(String projectPath, String filePath) {
+    private static List<String> getPmdCommands(String projectPath, String filePath) throws IOException {
         return Arrays.asList("./run.sh", "pmd", "--no-cache", "-d", projectPath + filePath,
                 "-f", "json", "-R", PathHelper.getCodeSmellRulesFilePath());
     }
