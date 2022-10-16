@@ -3,7 +3,7 @@ package org.ljmu.thesis.helpers;
 import org.apache.commons.csv.CSVRecord;
 import org.ljmu.thesis.commons.CsvReader;
 import org.ljmu.thesis.enums.Status;
-import org.ljmu.thesis.model.codesmells.RawPRRecord;
+import org.ljmu.thesis.model.crsmells.RawPRRecord;
 
 import java.io.IOException;
 import java.util.List;

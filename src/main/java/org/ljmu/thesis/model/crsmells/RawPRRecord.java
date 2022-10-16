@@ -1,4 +1,4 @@
-package org.ljmu.thesis.model.codesmells;
+package org.ljmu.thesis.model.crsmells;
 
 import org.ljmu.thesis.enums.Status;
 
