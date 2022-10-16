@@ -12,7 +12,7 @@ public class OutputPRRecord {
     private String afterCommitId;
     private int iterationCount;
 
-    // Fetched / Derived
+    // Fetched
     private String updatedFilesList; // Let's use ':' as delimiter within the String to separate items
     private String owner;
     private String reviewersList; // Let's use ':' as delimiter within the String to separate items
@@ -21,11 +21,15 @@ public class OutputPRRecord {
     private int locChanged;
     private String subject;
     private String message;
+
+    // Derived during CRSmells execution
     private boolean lackOfCRCRSmell;
     private boolean pingPongCRSmell;
     private boolean sleepingReviewsCRSmell;
     private boolean missingContextCRSmell;
     private boolean largeChangesetsCRSmell;
+
+    // Derived during Code Smell execution
     private Boolean increasedCodeSmells;
 
     public int getRevisionNumber() {

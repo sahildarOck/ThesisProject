@@ -14,7 +14,15 @@ public class PopulateCRSmellData {
     private static String changeId = "Id3b90536d6f7afbcbfb5bc3a4cca8bff1df53627";
 
     public static void main(String[] args) throws IOException {
-        //1. Get all CSVRecord
+        //  1. Get all RawPRRecords
+        //  2. For each RawPRRecord
+        //      i. Create 1 OutputPRRecord
+        //      ii. Populate the existing fields for OutputPRRecord from RawPRRecord
+        //      iii. Hit Gerrit endpoints and fetch GetChangeDetailOutput and GetChangeRevisionCommitOutput
+        //      iv. Populate the fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
+        //      v. Derive the CRSmells derived fields and populate them for OutputPRRecord
+
+
         GetChangeDetailOutput cdo = JsonHelper.getObject(GerritApiHelper.getChangeDetail(changeId), GetChangeDetailOutput.class);
         LOGGER.info(cdo.reviewers.REVIEWER[0].name);
 
