@@ -1,23 +1,24 @@
 package org.ljmu.thesis.model;
 
 
-import java.util.Date;
+import java.time.LocalDate;
 
-public class OutputPRRecord {
+public class ProcessedPRRecord implements WritableCsv {
     // Existing
-    private int revisionNumber;
+    private int reviewNumber;
     private String changeId;
     private String url;
+    private int iterationCount;
     private String beforeCommitId;
     private String afterCommitId;
-    private int iterationCount;
 
     // Fetched
     private String updatedFilesList; // Let's use ':' as delimiter within the String to separate items
+    private boolean atLeastOneUpdatedJavaFile;
     private String owner;
     private String reviewersList; // Let's use ':' as delimiter within the String to separate items
-    private Date createdDate;
-    private Date mergedDate;
+    private LocalDate createdDate;
+    private LocalDate mergedDate;
     private int locChanged;
     private String subject;
     private String message;
@@ -32,12 +33,12 @@ public class OutputPRRecord {
     // Derived during Code Smell execution
     private Boolean increasedCodeSmells;
 
-    public int getRevisionNumber() {
-        return revisionNumber;
+    public int getReviewNumber() {
+        return reviewNumber;
     }
 
-    public void setRevisionNumber(int revisionNumber) {
-        this.revisionNumber = revisionNumber;
+    public void setReviewNumber(int reviewNumber) {
+        this.reviewNumber = reviewNumber;
     }
 
     public String getChangeId() {
@@ -88,6 +89,14 @@ public class OutputPRRecord {
         this.updatedFilesList = updatedFilesList;
     }
 
+    public boolean isAtLeastOneUpdatedJavaFile() {
+        return atLeastOneUpdatedJavaFile;
+    }
+
+    public void setAtLeastOneUpdatedJavaFile(boolean atLeastOneUpdatedJavaFile) {
+        this.atLeastOneUpdatedJavaFile = atLeastOneUpdatedJavaFile;
+    }
+
     public String getOwner() {
         return owner;
     }
@@ -104,19 +113,19 @@ public class OutputPRRecord {
         this.reviewersList = reviewersList;
     }
 
-    public Date getCreatedDate() {
+    public LocalDate getCreatedDate() {
         return createdDate;
     }
 
-    public void setCreatedDate(Date createdDate) {
+    public void setCreatedDate(LocalDate createdDate) {
         this.createdDate = createdDate;
     }
 
-    public Date getMergedDate() {
+    public LocalDate getMergedDate() {
         return mergedDate;
     }
 
-    public void setMergedDate(Date mergedDate) {
+    public void setMergedDate(LocalDate mergedDate) {
         this.mergedDate = mergedDate;
     }
 
@@ -190,5 +199,13 @@ public class OutputPRRecord {
 
     public void setIncreasedCodeSmells(Boolean increasedCodeSmells) {
         this.increasedCodeSmells = increasedCodeSmells;
+    }
+
+    @Override
+    public String[] getRecords() {
+        String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId, updatedFilesList,
+                String.valueOf(atLeastOneUpdatedJavaFile), owner, reviewersList, createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
+                subject, message};
+        return records;
     }
 }

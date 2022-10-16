@@ -2,7 +2,9 @@ package org.ljmu.thesis.helpers;
 
 import org.apache.commons.csv.CSVRecord;
 import org.ljmu.thesis.commons.CsvReader;
+import org.ljmu.thesis.commons.CsvWriter;
 import org.ljmu.thesis.enums.Status;
+import org.ljmu.thesis.model.WritableCsv;
 import org.ljmu.thesis.model.crsmells.RawPRRecord;
 
 import java.io.IOException;
@@ -10,6 +12,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CsvHelper {
+
+    private static final String[] OUTPUT_HEADERS = {"revision_num", "change_id", "url", "iteration_count", "before_commit_id", "after_commit_id",
+            "updated_files_list", "at_least_one_updated_java_file", "owner", "reviewers_list", "T(created)", "T(merged)",
+            "LOC changed", "subject", "message", "lack_of_cr_cr_smell", "ping_pong_cr_smell", "sleeping_reviews_cr_smell", "missing_context_cr_smell",
+            "large_changesets_cr_smell", "increased_code_smells"};
+
     public static List<RawPRRecord> getMergedRawPRRecords() throws IOException {
         CsvReader csvReader = new CsvReader(PathHelper.getMetaDataCsvPath());
         List<CSVRecord> records = csvReader.getCsvRecords();
@@ -19,7 +27,12 @@ public class CsvHelper {
                 .map(r -> transformCsvRecord(r)).collect(Collectors.toList());
     }
 
-    public static RawPRRecord transformCsvRecord(CSVRecord record) {
+    public static void writeOutputCsv(List<WritableCsv> processedPRRecords) throws IOException {
+        List<String[]> recordsAsString = processedPRRecords.parallelStream().map(r -> r.getRecords()).collect(Collectors.toList());
+        new CsvWriter().write(PathHelper.getOutputFilePath() + "testOutputFile.csv", OUTPUT_HEADERS, recordsAsString);
+    }
+
+    private static RawPRRecord transformCsvRecord(CSVRecord record) {
         RawPRRecord rawPRRecord = new RawPRRecord();
 
         rawPRRecord.setId(record.get("id"));
@@ -33,10 +46,5 @@ public class CsvHelper {
         rawPRRecord.setAfterCommitId(record.get("after_commit_id"));
 
         return rawPRRecord;
-    }
-
-    public static void main(String[] args) throws IOException {
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
-        System.out.println("Heya!");
     }
 }
