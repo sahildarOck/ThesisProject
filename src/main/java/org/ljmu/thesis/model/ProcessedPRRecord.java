@@ -215,7 +215,7 @@ public class ProcessedPRRecord implements WritableCsv {
         String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId, updatedFilesList,
                 String.valueOf(atLeastOneUpdatedJavaFile), createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
                 subject, message, String.valueOf(lackOfCRCRSmell), String.valueOf(pingPongCRSmell), String.valueOf(sleepingReviewsCRSmell), String.valueOf(missingContextCRSmell),
-                String.valueOf(largeChangesetsCRSmell)};
+                String.valueOf(largeChangesetsCRSmell), String.valueOf(reviewBuddiesCRSmell)};
         return records;
     }
 }

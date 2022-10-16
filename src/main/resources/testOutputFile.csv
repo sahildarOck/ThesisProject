@@ -3,13 +3,13 @@ revision_num,change_id,url,iteration_count,before_commit_id,after_commit_id,upda
 
 Use the flipped linked resource icon
 
-Change-Id: I657dd11be165221ee58acf251d9304a829f8916c",false,false,true,false,false
+Change-Id: I657dd11be165221ee58acf251d9304a829f8916c",true,false,true,false,false,false
 10846,I7ca665801be7ba8a6272180606ffcc385ac61850,https://git.eclipse.org/r/#/c/10846,2,5556b634389127039c0200c9657fad698133b1bf,473563ad4b5d007a21d426807907947b26d7b853,:tests/org.eclipse.ui.tests.harness/src/org/eclipse/ui/tests/harness/util/UITestCase.java,true,2013-03-05,2013-03-05,8,Redundant else removed,"Redundant else removed
 
-Change-Id: I7ca665801be7ba8a6272180606ffcc385ac61850",true,false,false,true,false
+Change-Id: I7ca665801be7ba8a6272180606ffcc385ac61850",false,false,false,true,false,false
 10860,Id3b90536d6f7afbcbfb5bc3a4cca8bff1df53627,https://git.eclipse.org/r/#/c/10860,6,6ee8a8ba9bb2e56baf6c808d533c67530cbc94c9,6fbdca1d6326768b8b11e7d7b9e4fa4e0462da27,:bundles/org.eclipse.e4.ui.workbench.renderers.swt/src/org/eclipse/e4/ui/workbench/renderers/swt/MenuManagerRenderer.java,true,2013-03-05,2013-04-04,82,Bug 374568 - Part menu is not rendered correctly after removing menu items,"Bug 374568 - Part menu is not rendered correctly after removing menu
 items
 
 Respond to incoming model changes.
 
-Change-Id: Id3b90536d6f7afbcbfb5bc3a4cca8bff1df53627",false,true,false,false,false
+Change-Id: Id3b90536d6f7afbcbfb5bc3a4cca8bff1df53627",true,true,false,false,false,false

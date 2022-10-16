@@ -4,7 +4,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.ljmu.thesis.commons.CsvReader;
 import org.ljmu.thesis.commons.CsvWriter;
 import org.ljmu.thesis.enums.Status;
-import org.ljmu.thesis.model.WritableCsv;
+import org.ljmu.thesis.model.ProcessedPRRecord;
 import org.ljmu.thesis.model.crsmells.RawPRRecord;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class CsvHelper {
                 .map(r -> transformCsvRecord(r)).collect(Collectors.toList());
     }
 
-    public static void writeOutputCsv(List<WritableCsv> processedPRRecords) throws IOException {
+    public static void writeOutputCsv(List<ProcessedPRRecord> processedPRRecords) throws IOException {
         List<String[]> recordsAsString = processedPRRecords.parallelStream().map(r -> r.getRecords()).collect(Collectors.toList());
         new CsvWriter().write(PathHelper.getOutputFilePath() + "testOutputFile.csv", OUTPUT_HEADERS, recordsAsString);
     }
