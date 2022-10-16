@@ -1,7 +1,7 @@
 package org.ljmu.thesis.model;
 
-
 import java.time.LocalDate;
+import java.util.List;
 
 public class ProcessedPRRecord implements WritableCsv {
     // Existing
@@ -16,7 +16,7 @@ public class ProcessedPRRecord implements WritableCsv {
     private String updatedFilesList; // Let's use ':' as delimiter within the String to separate items
     private boolean atLeastOneUpdatedJavaFile;
     private String owner;
-    private String reviewersList; // Let's use ':' as delimiter within the String to separate items
+    private List<String> reviewersList; // Let's use ':' as delimiter within the String to separate items
     private LocalDate createdDate;
     private LocalDate mergedDate;
     private int locChanged;
@@ -29,6 +29,7 @@ public class ProcessedPRRecord implements WritableCsv {
     private boolean sleepingReviewsCRSmell;
     private boolean missingContextCRSmell;
     private boolean largeChangesetsCRSmell;
+    private boolean reviewBuddiesCRSmell;
 
     // Derived during Code Smell execution
     private Boolean increasedCodeSmells;
@@ -105,11 +106,11 @@ public class ProcessedPRRecord implements WritableCsv {
         this.owner = owner;
     }
 
-    public String getReviewersList() {
+    public List<String> getReviewersList() {
         return reviewersList;
     }
 
-    public void setReviewersList(String reviewersList) {
+    public void setReviewersList(List<String> reviewersList) {
         this.reviewersList = reviewersList;
     }
 
@@ -193,6 +194,14 @@ public class ProcessedPRRecord implements WritableCsv {
         this.largeChangesetsCRSmell = largeChangesetsCRSmell;
     }
 
+    public boolean isReviewBuddiesCRSmell() {
+        return reviewBuddiesCRSmell;
+    }
+
+    public void setReviewBuddiesCRSmell(boolean reviewBuddiesCRSmell) {
+        this.reviewBuddiesCRSmell = reviewBuddiesCRSmell;
+    }
+
     public Boolean getIncreasedCodeSmells() {
         return increasedCodeSmells;
     }
@@ -204,8 +213,9 @@ public class ProcessedPRRecord implements WritableCsv {
     @Override
     public String[] getRecords() {
         String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId, updatedFilesList,
-                String.valueOf(atLeastOneUpdatedJavaFile), owner, reviewersList, createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
-                subject, message};
+                String.valueOf(atLeastOneUpdatedJavaFile), createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
+                subject, message, String.valueOf(lackOfCRCRSmell), String.valueOf(pingPongCRSmell), String.valueOf(sleepingReviewsCRSmell), String.valueOf(missingContextCRSmell),
+                String.valueOf(largeChangesetsCRSmell)};
         return records;
     }
 }

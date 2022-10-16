@@ -17,13 +17,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class PopulateCRSmellData {
     private static final Logger LOGGER = Logger.getLogger(PopulateCRSmellData.class.getName());
-
-    private static String changeId = "Id3b90536d6f7afbcbfb5bc3a4cca8bff1df53627";
-
-    private static List<String> IGNORE_REVIEWERS_LIST = Arrays.asList("hudsonvoter", "egenie");
+    private static final List<String> IGNORE_REVIEWERS_LIST = Arrays.asList("hudsonvoter", "egenie");
+    private static final int PING_PONG_THRESHOLD = 3;
+    private static final int SLEEPING_REVIEW_THRESHOLD = 2;
+    private static final int LOC_CHANGED_THRESHOLD = 500;
 
     public static void main(String[] args) throws IOException {
         //  1. Get all RawPRRecords
@@ -60,17 +61,25 @@ public class PopulateCRSmellData {
 
             //  vi. Populate the fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
             processedPRRecord.setOwner(changeDetailOutput.owner.username); // TODO: Update to private fields
-            processedPRRecord.setReviewersList(getFilteredColonDelimitedReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.owner.username)); // TODO: Update to private fields
+            processedPRRecord.setReviewersList(getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.owner.username)); // TODO: Update to private fields
             processedPRRecord.setCreatedDate(DateUtils.getDate(changeDetailOutput.created)); // TODO: Update to private fields
             processedPRRecord.setMergedDate(DateUtils.getDate(changeDetailOutput.submitted)); // TODO: Update to private fields
             processedPRRecord.setLocChanged(changeDetailOutput.insertions + changeDetailOutput.deletions); // TODO: Update to private fields
-            processedPRRecord.setSubject(changeRevisionCommitOutput.subject); // TODO: Update to private fields
-            processedPRRecord.setMessage(changeRevisionCommitOutput.message); // TODO: Update to private fields
+            processedPRRecord.setSubject(changeRevisionCommitOutput.subject.trim()); // TODO: Update to private fields
+            processedPRRecord.setMessage(changeRevisionCommitOutput.message.trim()); // TODO: Update to private fields
 
-            //  vii. Derive the CRSmells derived fields and populate them for OutputPRRecord
+            //  vii. Derive the CRSmells (except review_buddies_cr_smell) derived fields and populate them for OutputPRRecord
+            processedPRRecord.setLackOfCRCRSmell(processedPRRecord.getReviewersList().isEmpty());
+            processedPRRecord.setPingPongCRSmell(processedPRRecord.getIterationCount() > PING_PONG_THRESHOLD);
+            processedPRRecord.setSleepingReviewsCRSmell(processedPRRecord.getMergedDate().compareTo(processedPRRecord.getCreatedDate()) > SLEEPING_REVIEW_THRESHOLD);
+            processedPRRecord.setMissingContextCRSmell(isMissingContextCRSmell(processedPRRecord.getSubject(), processedPRRecord.getMessage()));
+            processedPRRecord.setLargeChangesetsCRSmell(processedPRRecord.getLocChanged() > LOC_CHANGED_THRESHOLD);
 
             processedPRRecords.add(processedPRRecord);
         }
+
+        //  viii. Derive review_buddies_cr_smell and populate it for OutputPRRecord
+
 
         CsvHelper.writeOutputCsv(processedPRRecords);
     }
@@ -89,10 +98,17 @@ public class PopulateCRSmellData {
         return updatedFiles.stream().reduce("", (str1, str2) -> str1 + ":" + str2);
     }
 
-    private static String getFilteredColonDelimitedReviewersList(Developer[] reviewers, String ownerUsername) {
+    private static List<String> getFilteredReviewersList(Developer[] reviewers, String ownerUsername) {
         return Arrays.stream(reviewers)
                 .filter(r -> !IGNORE_REVIEWERS_LIST.contains(r.username) && !ownerUsername.equals(r.username))
-                .map(r -> r.username)
-                .reduce("", (str1, str2) -> str1 + ":" + str2);
+                .map(r -> r.username).collect(Collectors.toList());
+    }
+
+    private static boolean isMissingContextCRSmell(String subject, String message) {
+        if (subject.isEmpty() || message.isEmpty()) {
+            return true;
+        }
+        String filteredMessage = message.split("[\n]*Change-Id")[0];
+        return subject.equals(filteredMessage);
     }
 }
