@@ -14,7 +14,9 @@ public class CsvHelper {
         CsvReader csvReader = new CsvReader(PathHelper.getMetaDataCsvPath());
         List<CSVRecord> records = csvReader.getCsvRecords();
 
-        return records.parallelStream().map(r -> transformCsvRecord(r)).filter(r -> Status.MERGED == r.getStatus()).collect(Collectors.toList());
+        return records.parallelStream()
+                .filter(r -> Status.MERGED.name().equals(r.get("status")))
+                .map(r -> transformCsvRecord(r)).collect(Collectors.toList());
     }
 
     public static RawPRRecord transformCsvRecord(CSVRecord record) {
