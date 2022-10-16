@@ -7,7 +7,7 @@
     "gitRepos": "/git_repos",
     "metadata": "/metadata",
     "codeSmellRules": "src/main/resources/CodeSmellRules.xml",
-    "outputFile": "src/main/resources/"
+    "outputCsvFile": "src/main/resources/"
   },
   "projects": [
     "couchbase-java-client",

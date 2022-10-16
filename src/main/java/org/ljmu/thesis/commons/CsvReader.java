@@ -26,7 +26,19 @@ public class CsvReader {
         }
     }
 
-    public String getValue(int recordNumber, String header) throws IOException {
-        return records.get(recordNumber).get(header);
+    public List<CSVRecord> getCsvRecords() {
+        return records;
+    }
+
+    public String getValue(int rowNumber, String header) {
+        if (rowNumber < 2) {
+            throw new IllegalArgumentException("rowNumber cannot be less than 2...!!!");
+        }
+        return records.get(rowNumber - 2).get(header);
+    }
+
+    public static void main(String[] args) throws IOException {
+        CsvReader reader = new CsvReader(INPUT_CSV_PATH);
+        System.out.println(reader.getValue(2, "review_number"));
     }
 }

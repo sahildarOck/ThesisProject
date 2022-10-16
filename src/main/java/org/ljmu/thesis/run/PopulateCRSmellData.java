@@ -14,6 +14,7 @@ public class PopulateCRSmellData {
     private static String changeId = "Id3b90536d6f7afbcbfb5bc3a4cca8bff1df53627";
 
     public static void main(String[] args) throws IOException {
+        //1. Get all CSVRecord
         GetChangeDetailOutput cdo = JsonHelper.getObject(GerritApiHelper.getChangeDetail(changeId), GetChangeDetailOutput.class);
         LOGGER.info(cdo.reviewers.REVIEWER[0].name);
 

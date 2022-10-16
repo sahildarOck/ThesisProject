@@ -14,9 +14,9 @@ public class PathHelper {
         return config.path.cropDataset + config.path.gitRepos + File.separator + config.projectToRun;
     }
 
-    public static String getMetaDataProjectPath() throws IOException {
+    public static String getMetaDataCsvPath() throws IOException {
         Config config = getConfig();
-        return config.path.cropDataset + config.path.metadata + File.separator + config.projectToRun;
+        return config.path.cropDataset + config.path.metadata + File.separator + config.projectToRun + ".csv";
     }
 
     public static String getCodeSmellRulesFilePath() throws IOException {
@@ -31,6 +31,6 @@ public class PathHelper {
 
     public static String getOutputFilePath() throws IOException {
         Config config = getConfig();
-        return config.path.outputFile;
+        return config.path.outputCsvFile;
     }
 }
