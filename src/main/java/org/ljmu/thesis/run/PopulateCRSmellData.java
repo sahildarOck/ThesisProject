@@ -30,10 +30,11 @@ public class PopulateCRSmellData {
 
     public static void main(String[] args) {
         try {
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "40");
             long start = System.currentTimeMillis();
             populate();
             long end = System.currentTimeMillis();
-            LOGGER.info(String.format("Time taken in minutes to finish [%d] records: [%d]", MAX_RECORDS_TO_INCLUDE, TimeUnit.MILLISECONDS.toMinutes(end - start)));
+            LOGGER.info(String.format("Time taken in minutes to finish: [%d]", TimeUnit.MILLISECONDS.toMinutes(end - start)));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -67,8 +68,8 @@ public class PopulateCRSmellData {
                 //  vi. Populate the fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
 
                 //  vi.a. Init/Update ownerReviewersReviewCountMap
-                String owner = changeDetailOutput.owner.name; // TODO: Update to private fields
-                List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.owner.name); // TODO: Update to private fields
+                String owner = changeDetailOutput.getOwner().getName();
+                List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.getOwner().getName()); // TODO: Update to private fields
                 Map<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(pr.getOwner()) ? ownerReviewersReviewCountMap.get(pr.getOwner()) : new HashMap<>();
                 filteredReviewersList.forEach(r -> {
                     int reviewerForThisAuthorReviewCount = reviewersReviewCountMap.containsKey(r) ? reviewersReviewCountMap.get(r) : 0;
@@ -83,14 +84,16 @@ public class PopulateCRSmellData {
                 //  vi.c. Populate other fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
                 prUpdated.setOwner(owner);
                 prUpdated.setReviewersList(filteredReviewersList);
-                prUpdated.setCreatedDate(DateUtils.getDate(changeDetailOutput.created)); // TODO: Update to private fields
-                prUpdated.setMergedDate(DateUtils.getDate(changeDetailOutput.submitted)); // TODO: Update to private fields
-                prUpdated.setLocChanged(changeDetailOutput.insertions + changeDetailOutput.deletions); // TODO: Update to private fields
-                prUpdated.setSubject(changeRevisionCommitOutput.subject.trim()); // TODO: Update to private fields
-                prUpdated.setMessage(changeRevisionCommitOutput.message.trim()); // TODO: Update to private fields
+                prUpdated.setCreatedDate(DateUtils.getDate(changeDetailOutput.getCreated()));
+                prUpdated.setMergedDate(DateUtils.getDate(changeDetailOutput.getSubmitted()));
+                prUpdated.setLocChanged(changeDetailOutput.getInsertions() + changeDetailOutput.getDeletions());
+                prUpdated.setSubject(changeRevisionCommitOutput.getSubject().trim());
+                prUpdated.setMessage(changeRevisionCommitOutput.getMessage().trim());
+
+                LOGGER.info(String.format("Object updated after Gerrit calls for review number: [%d]", pr.getReviewNumber()));
             } catch (Exception e) {
                 if (pr != null) {
-                    LOGGER.log(Level.SEVERE, String.format("Failure occured for review number: [%d]. Details below: ", pr.getReviewNumber()));
+                    LOGGER.log(Level.SEVERE, String.format("Failure occurred for review number: [%d]. Details below: ", pr.getReviewNumber()));
                 }
                 e.printStackTrace();
             }
@@ -161,10 +164,13 @@ public class PopulateCRSmellData {
         return updatedFiles.stream().reduce("", (str1, str2) -> str1 + ":" + str2);
     }
 
-    private static List<String> getFilteredReviewersList(Developer[] reviewers, String ownerUsername) {
+    private static List<String> getFilteredReviewersList(Developer[] reviewers, String ownerName) {
+        if (reviewers == null) {
+            return new ArrayList<>();
+        }
         return Arrays.stream(reviewers)
-                .filter(r -> !IGNORE_REVIEWERS_LIST.contains(r.name) && !ownerUsername.equals(r.name))
-                .map(r -> r.name).collect(Collectors.toList());
+                .filter(r -> !IGNORE_REVIEWERS_LIST.contains(r.getName()) && !ownerName.equals(r.getName()))
+                .map(r -> r.getName()).collect(Collectors.toList());
     }
 
     private static boolean isMissingContextCRSmell(String subject, String message) {
