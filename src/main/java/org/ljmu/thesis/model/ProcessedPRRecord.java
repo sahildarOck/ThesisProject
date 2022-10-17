@@ -3,7 +3,7 @@ package org.ljmu.thesis.model;
 import java.time.LocalDate;
 import java.util.List;
 
-public class ProcessedPRRecord implements WritableCsv {
+public class ProcessedPRRecord implements WritableCsv, Cloneable {
     // Existing
     private int reviewNumber;
     private String changeId;
@@ -217,5 +217,17 @@ public class ProcessedPRRecord implements WritableCsv {
                 subject, message, String.valueOf(lackOfCRCRSmell), String.valueOf(pingPongCRSmell), String.valueOf(sleepingReviewsCRSmell), String.valueOf(missingContextCRSmell),
                 String.valueOf(largeChangesetsCRSmell), String.valueOf(reviewBuddiesCRSmell)};
         return records;
+    }
+
+    // TODO: Temporary, remove
+//    @Override
+//    public String[] getRecords() {
+//        String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId};
+//        return records;
+//    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

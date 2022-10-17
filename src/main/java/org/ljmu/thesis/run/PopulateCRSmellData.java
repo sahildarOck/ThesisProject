@@ -13,6 +13,8 @@ import org.ljmu.thesis.model.crsmells.RawPRRecord;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -24,22 +26,92 @@ public class PopulateCRSmellData {
     private static final int LOC_CHANGED_THRESHOLD = 500;
     private static final int REVIEW_BUDDIES_TOTAL_PRS_BY_AUTHOR_THRESHOLD = 50;
 
-    public static void main(String[] args) throws IOException {
+    private static final int MAX_RECORDS_TO_INCLUDE = 200;
+
+    public static void main(String[] args) {
+        try {
+            long start = System.currentTimeMillis();
+            populate();
+            long end = System.currentTimeMillis();
+            LOGGER.info(String.format("Time taken in minutes to finish [%d] records: [%d]", MAX_RECORDS_TO_INCLUDE, TimeUnit.MILLISECONDS.toMinutes(end - start)));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 10);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         Map<String, Map<String, Integer>> ownerReviewersReviewCountMap = new HashMap<>();
         Map<String, Integer> ownerPRCountMap = new HashMap<>();
-        int firstProcessedRecordCount = 0;
 
-        //  2. For each RawPRRecord
+        populateExistingFieldsInProcessedPRRecordsFromRawPRRecords(rawPRRecords, processedPRRecords);
+
+        //  3. For each ProcessedPRRecord execute in parallel
+        processedPRRecords = processedPRRecords.parallelStream().map(pr -> {
+            ProcessedPRRecord prUpdated = null;
+            try {
+                // Clone the ProcessedPRRecord to enable writing
+                prUpdated = (ProcessedPRRecord) pr.clone();
+
+                //  iv. Hit Gerrit endpoints to get the updated files details
+                String colonDelimitedUpdatedFilesList = getColonDelimitedUpdatedFilesList(pr.getReviewNumber(), pr.getIterationCount());
+                prUpdated.setUpdatedFilesList(colonDelimitedUpdatedFilesList);
+                prUpdated.setAtLeastOneUpdatedJavaFile(colonDelimitedUpdatedFilesList.contains(".java"));
+
+                //  v. Hit Gerrit endpoints and fetch GetChangeDetailOutput and GetChangeRevisionCommitOutput
+                GetChangeDetailOutput changeDetailOutput = JsonHelper.getObject(GerritApiHelper.getChangeDetail(pr.getReviewNumber()), GetChangeDetailOutput.class);
+                GetChangeRevisionCommitOutput changeRevisionCommitOutput = JsonHelper.getObject(GerritApiHelper.getChangeRevisionCommit(pr.getReviewNumber()), GetChangeRevisionCommitOutput.class);
+
+                //  vi. Populate the fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
+
+                //  vi.a. Init/Update ownerReviewersReviewCountMap
+                String owner = changeDetailOutput.owner.username; // TODO: Update to private fields
+                List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.owner.username); // TODO: Update to private fields
+                Map<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(pr.getOwner()) ? ownerReviewersReviewCountMap.get(pr.getOwner()) : new HashMap<>();
+                filteredReviewersList.forEach(r -> {
+                    int reviewerForThisAuthorReviewCount = reviewersReviewCountMap.containsKey(r) ? reviewersReviewCountMap.get(r) : 0;
+                    reviewersReviewCountMap.put(r, reviewerForThisAuthorReviewCount + 1);
+                });
+                ownerReviewersReviewCountMap.put(owner, reviewersReviewCountMap);
+
+                //  vi.b. Init/Update authorReviewCountMap
+                int ownerReviewCount = ownerPRCountMap.containsKey(owner) ? ownerPRCountMap.get(owner) : 1;
+                ownerPRCountMap.put(owner, ownerReviewCount);
+
+                //  vi.c. Populate other fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
+                prUpdated.setOwner(owner);
+                prUpdated.setReviewersList(filteredReviewersList);
+                prUpdated.setCreatedDate(DateUtils.getDate(changeDetailOutput.created)); // TODO: Update to private fields
+                prUpdated.setMergedDate(DateUtils.getDate(changeDetailOutput.submitted)); // TODO: Update to private fields
+                prUpdated.setLocChanged(changeDetailOutput.insertions + changeDetailOutput.deletions); // TODO: Update to private fields
+                prUpdated.setSubject(changeRevisionCommitOutput.subject.trim()); // TODO: Update to private fields
+                prUpdated.setMessage(changeRevisionCommitOutput.message.trim()); // TODO: Update to private fields
+            } catch (Exception e) {
+                if (pr != null) {
+                    LOGGER.log(Level.SEVERE, String.format("Failure occured for review number: [%d]. Details below: ", pr.getReviewNumber()));
+                }
+                e.printStackTrace();
+            }
+            return prUpdated;
+        }).collect(Collectors.toList());
+
+        deriveAndPopulateCRSmellsInProcessedPRRecords(processedPRRecords, ownerReviewersReviewCountMap, ownerPRCountMap);
+
+        CsvHelper.writeOutputCsv(processedPRRecords);
+    }
+
+    private static void populateExistingFieldsInProcessedPRRecordsFromRawPRRecords(List<RawPRRecord> rawPRRecords, List<ProcessedPRRecord> processedPRRecords) {
+        //  2. For each RawPRRecord execute sequentially
         for (int i = 0; i < rawPRRecords.size(); i++) {
+            ProcessedPRRecord processedPRRecord = null;
             RawPRRecord firstRawPRRecordForPR = rawPRRecords.get(i);
 
             //  i. Create 1 OutputPRRecord
-            ProcessedPRRecord processedPRRecord = new ProcessedPRRecord();
+            processedPRRecord = new ProcessedPRRecord();
 
-            //  ii. Populate the existing fields for OutputPRRecord from RawPRRecord
+            //  ii. Populate the existing fields for ProcessedPRRecord from RawPRRecord
             processedPRRecord.setReviewNumber(firstRawPRRecordForPR.getReviewNumber());
             processedPRRecord.setChangeId(firstRawPRRecordForPR.getChangeId());
             processedPRRecord.setUrl(Utils.getPRUrlFromRevisionUrl(firstRawPRRecordForPR.getUrl()));
@@ -51,53 +123,20 @@ public class PopulateCRSmellData {
             processedPRRecord.setIterationCount(lastRawPRRecordForPR.getRevisionNumber());
             processedPRRecord.setAfterCommitId(lastRawPRRecordForPR.getAfterCommitId());
 
-            //  iv. Hit Gerrit endpoints to get the updated files details
-            String colonDelimitedUpdatedFilesList = getColonDelimitedUpdatedFilesList(processedPRRecord.getReviewNumber(), processedPRRecord.getIterationCount());
-            processedPRRecord.setUpdatedFilesList(colonDelimitedUpdatedFilesList);
-            processedPRRecord.setAtLeastOneUpdatedJavaFile(colonDelimitedUpdatedFilesList.contains(".java"));
-
-            //  v. Hit Gerrit endpoints and fetch GetChangeDetailOutput and GetChangeRevisionCommitOutput
-            GetChangeDetailOutput changeDetailOutput = JsonHelper.getObject(GerritApiHelper.getChangeDetail(processedPRRecord.getReviewNumber()), GetChangeDetailOutput.class);
-            GetChangeRevisionCommitOutput changeRevisionCommitOutput = JsonHelper.getObject(GerritApiHelper.getChangeRevisionCommit(processedPRRecord.getReviewNumber()), GetChangeRevisionCommitOutput.class);
-
-            //  vi. Populate the fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
-            processedPRRecord.setOwner(changeDetailOutput.owner.username); // TODO: Update to private fields
-            processedPRRecord.setReviewersList(getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.owner.username)); // TODO: Update to private fields
-
-            //  vi.a. Init/Update ownerReviewersReviewCountMap
-            Map<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(processedPRRecord.getOwner()) ? ownerReviewersReviewCountMap.get(processedPRRecord.getOwner()) : new HashMap<>();
-            processedPRRecord.getReviewersList().forEach(r -> {
-                int reviewerForThisAuthorReviewCount = reviewersReviewCountMap.containsKey(r) ? reviewersReviewCountMap.get(r) : 0;
-                reviewersReviewCountMap.put(r, reviewerForThisAuthorReviewCount + 1);
-            });
-            ownerReviewersReviewCountMap.put(processedPRRecord.getOwner(), reviewersReviewCountMap);
-
-            //  vi.b. Init/Update authorReviewCountMap
-            int ownerReviewCount = ownerPRCountMap.containsKey(processedPRRecord.getOwner()) ? ownerPRCountMap.get(processedPRRecord.getOwner()) : 1;
-            ownerPRCountMap.put(processedPRRecord.getOwner(), ownerReviewCount);
-
-            processedPRRecord.setCreatedDate(DateUtils.getDate(changeDetailOutput.created)); // TODO: Update to private fields
-            processedPRRecord.setMergedDate(DateUtils.getDate(changeDetailOutput.submitted)); // TODO: Update to private fields
-            processedPRRecord.setLocChanged(changeDetailOutput.insertions + changeDetailOutput.deletions); // TODO: Update to private fields
-            processedPRRecord.setSubject(changeRevisionCommitOutput.subject.trim()); // TODO: Update to private fields
-            processedPRRecord.setMessage(changeRevisionCommitOutput.message.trim()); // TODO: Update to private fields
-
-            //  vii. Derive the CRSmells (except review_buddies_cr_smell) derived fields and populate them for OutputPRRecord
-            processedPRRecord.setLackOfCRCRSmell(processedPRRecord.getReviewersList().isEmpty());
-            processedPRRecord.setPingPongCRSmell(processedPRRecord.getIterationCount() > PING_PONG_THRESHOLD);
-            processedPRRecord.setSleepingReviewsCRSmell(processedPRRecord.getMergedDate().compareTo(processedPRRecord.getCreatedDate()) > SLEEPING_REVIEW_THRESHOLD);
-            processedPRRecord.setMissingContextCRSmell(isMissingContextCRSmell(processedPRRecord.getSubject(), processedPRRecord.getMessage()));
-            processedPRRecord.setLargeChangesetsCRSmell(processedPRRecord.getLocChanged() > LOC_CHANGED_THRESHOLD);
-
             processedPRRecords.add(processedPRRecord);
-            firstProcessedRecordCount++;
-            if (firstProcessedRecordCount % 500 == 0) {
-                LOGGER.info(String.format("First loop processing completed for: %d records", firstProcessedRecordCount));
-            }
         }
+    }
 
-        //  viii. Derive review_buddies_cr_smell and populate it for OutputPRRecord
-        processedPRRecords.stream().forEach(pr -> {
+    private static void deriveAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords, Map<String, Map<String, Integer>> ownerReviewersReviewCountMap, Map<String, Integer> ownerPRCountMap) {
+        processedPRRecords.parallelStream().forEach(pr -> {
+            //  vii. Derive the CRSmells derived fields and populate them for OutputPRRecord
+            pr.setLackOfCRCRSmell(pr.getReviewersList().isEmpty());
+            pr.setPingPongCRSmell(pr.getIterationCount() > PING_PONG_THRESHOLD);
+            pr.setSleepingReviewsCRSmell(pr.getMergedDate().compareTo(pr.getCreatedDate()) > SLEEPING_REVIEW_THRESHOLD);
+            pr.setMissingContextCRSmell(isMissingContextCRSmell(pr.getSubject(), pr.getMessage()));
+            pr.setLargeChangesetsCRSmell(pr.getLocChanged() > LOC_CHANGED_THRESHOLD);
+
+            //  Deriving review_buddies_cr_smell
             int ownerPRCount = ownerPRCountMap.get(pr.getOwner());
             if (ownerPRCount < REVIEW_BUDDIES_TOTAL_PRS_BY_AUTHOR_THRESHOLD) {
                 return;
@@ -106,8 +145,6 @@ public class PopulateCRSmellData {
             boolean reviewBuddiesCRSmell = pr.getReviewersList().stream().anyMatch(r -> reviewersReviewCountMap.get(r) > ownerPRCount / 2);
             pr.setReviewBuddiesCRSmell(reviewBuddiesCRSmell);
         });
-
-        CsvHelper.writeOutputCsv(processedPRRecords);
     }
 
     private static int getLastRevisionIndex(int index, int reviewNumber, List<RawPRRecord> rawPRRecords) {
