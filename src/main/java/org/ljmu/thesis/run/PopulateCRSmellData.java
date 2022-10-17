@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class PopulateCRSmellData {
     private static final Logger LOGGER = Logger.getLogger(PopulateCRSmellData.class.getName());
-    private static final List<String> IGNORE_REVIEWERS_LIST = Arrays.asList("hudsonvoter", "egenie");
+    private static final List<String> IGNORE_REVIEWERS_LIST = Arrays.asList("CI Bot", "Eclipse Genie", "Gerrit Code Review @ Eclipse.org");
     private static final int PING_PONG_THRESHOLD = 3;
     private static final int SLEEPING_REVIEW_THRESHOLD = 2;
     private static final int LOC_CHANGED_THRESHOLD = 500;
@@ -67,8 +67,8 @@ public class PopulateCRSmellData {
                 //  vi. Populate the fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
 
                 //  vi.a. Init/Update ownerReviewersReviewCountMap
-                String owner = changeDetailOutput.owner.username; // TODO: Update to private fields
-                List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.owner.username); // TODO: Update to private fields
+                String owner = changeDetailOutput.owner.name; // TODO: Update to private fields
+                List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.owner.name); // TODO: Update to private fields
                 Map<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(pr.getOwner()) ? ownerReviewersReviewCountMap.get(pr.getOwner()) : new HashMap<>();
                 filteredReviewersList.forEach(r -> {
                     int reviewerForThisAuthorReviewCount = reviewersReviewCountMap.containsKey(r) ? reviewersReviewCountMap.get(r) : 0;
@@ -163,8 +163,8 @@ public class PopulateCRSmellData {
 
     private static List<String> getFilteredReviewersList(Developer[] reviewers, String ownerUsername) {
         return Arrays.stream(reviewers)
-                .filter(r -> !IGNORE_REVIEWERS_LIST.contains(r.username) && !ownerUsername.equals(r.username))
-                .map(r -> r.username).collect(Collectors.toList());
+                .filter(r -> !IGNORE_REVIEWERS_LIST.contains(r.name) && !ownerUsername.equals(r.name))
+                .map(r -> r.name).collect(Collectors.toList());
     }
 
     private static boolean isMissingContextCRSmell(String subject, String message) {

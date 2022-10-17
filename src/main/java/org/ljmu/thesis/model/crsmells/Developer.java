@@ -6,5 +6,4 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class Developer {
     public String name;
     public String email;
-    public String username;
 }
