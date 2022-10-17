@@ -13,7 +13,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
     private String afterCommitId;
 
     // Fetched
-    private String updatedFilesList; // Let's use ':' as delimiter within the String to separate items
+    private List<String> updatedFilesList; // Let's use ':' as delimiter within the String to separate items
     private boolean atLeastOneUpdatedJavaFile;
     private String owner;
     private List<String> reviewersList; // Let's use ':' as delimiter within the String to separate items
@@ -82,11 +82,11 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.iterationCount = iterationCount;
     }
 
-    public String getUpdatedFilesList() {
+    public List<String> getUpdatedFilesList() {
         return updatedFilesList;
     }
 
-    public void setUpdatedFilesList(String updatedFilesList) {
+    public void setUpdatedFilesList(List<String> updatedFilesList) {
         this.updatedFilesList = updatedFilesList;
     }
 
@@ -212,19 +212,12 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
 
     @Override
     public String[] getRecords() {
-        String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId, updatedFilesList,
+        String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId,
                 String.valueOf(atLeastOneUpdatedJavaFile), createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
                 subject, message, String.valueOf(lackOfCRCRSmell), String.valueOf(pingPongCRSmell), String.valueOf(sleepingReviewsCRSmell), String.valueOf(missingContextCRSmell),
                 String.valueOf(largeChangesetsCRSmell), String.valueOf(reviewBuddiesCRSmell)};
         return records;
     }
-
-    // TODO: Temporary, remove
-//    @Override
-//    public String[] getRecords() {
-//        String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId};
-//        return records;
-//    }
 
     @Override
     public Object clone() throws CloneNotSupportedException {

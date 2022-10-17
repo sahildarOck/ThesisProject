@@ -57,9 +57,9 @@ public class PopulateCRSmellData {
                 prUpdated = (ProcessedPRRecord) pr.clone();
 
                 //  iv. Hit Gerrit endpoints to get the updated files details
-                String colonDelimitedUpdatedFilesList = getColonDelimitedUpdatedFilesList(pr.getReviewNumber(), pr.getIterationCount());
-                prUpdated.setUpdatedFilesList(colonDelimitedUpdatedFilesList);
-                prUpdated.setAtLeastOneUpdatedJavaFile(colonDelimitedUpdatedFilesList.contains(".java"));
+                List<String> updatedFilesList = getUpdatedFilesList(pr.getReviewNumber(), pr.getIterationCount());
+                prUpdated.setUpdatedFilesList(updatedFilesList);
+                prUpdated.setAtLeastOneUpdatedJavaFile(updatedFilesList.parallelStream().anyMatch(f -> f.contains(".java")));
 
                 //  v. Hit Gerrit endpoints and fetch GetChangeDetailOutput and GetChangeRevisionCommitOutput
                 GetChangeDetailOutput changeDetailOutput = JsonHelper.getObject(GerritApiHelper.getChangeDetail(pr.getReviewNumber()), GetChangeDetailOutput.class);
@@ -157,11 +157,11 @@ public class PopulateCRSmellData {
         return index - 1;
     }
 
-    private static String getColonDelimitedUpdatedFilesList(int reviewNumber, int commitNumber) throws IOException {
+    private static List<String> getUpdatedFilesList(int reviewNumber, int commitNumber) throws IOException {
         String changeRevisionFilesApiOutput = GerritApiHelper.getChangeRevisionFiles(reviewNumber, commitNumber);
         List<String> updatedFiles = JsonHelper.getFieldNames(changeRevisionFilesApiOutput);
         updatedFiles.remove(0); // Remove the 'COMMIT_MSG' field
-        return updatedFiles.stream().reduce("", (str1, str2) -> str1 + ":" + str2);
+        return updatedFiles;
     }
 
     private static List<String> getFilteredReviewersList(Developer[] reviewers, String ownerName) {
