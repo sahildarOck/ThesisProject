@@ -26,7 +26,7 @@ public class PopulateCRSmellData {
 
     public static void main(String[] args) throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 10);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         Map<String, Map<String, Integer>> ownerReviewersReviewCountMap = new HashMap<>();
         Map<String, Integer> ownerPRCountMap = new HashMap<>();
@@ -52,13 +52,13 @@ public class PopulateCRSmellData {
             processedPRRecord.setAfterCommitId(lastRawPRRecordForPR.getAfterCommitId());
 
             //  iv. Hit Gerrit endpoints to get the updated files details
-            String colonDelimitedUpdatedFilesList = getColonDelimitedUpdatedFilesList(processedPRRecord.getChangeId(), processedPRRecord.getIterationCount());
+            String colonDelimitedUpdatedFilesList = getColonDelimitedUpdatedFilesList(processedPRRecord.getReviewNumber(), processedPRRecord.getIterationCount());
             processedPRRecord.setUpdatedFilesList(colonDelimitedUpdatedFilesList);
             processedPRRecord.setAtLeastOneUpdatedJavaFile(colonDelimitedUpdatedFilesList.contains(".java"));
 
             //  v. Hit Gerrit endpoints and fetch GetChangeDetailOutput and GetChangeRevisionCommitOutput
-            GetChangeDetailOutput changeDetailOutput = JsonHelper.getObject(GerritApiHelper.getChangeDetail(processedPRRecord.getChangeId()), GetChangeDetailOutput.class);
-            GetChangeRevisionCommitOutput changeRevisionCommitOutput = JsonHelper.getObject(GerritApiHelper.getChangeRevisionCommit(processedPRRecord.getChangeId()), GetChangeRevisionCommitOutput.class);
+            GetChangeDetailOutput changeDetailOutput = JsonHelper.getObject(GerritApiHelper.getChangeDetail(processedPRRecord.getReviewNumber()), GetChangeDetailOutput.class);
+            GetChangeRevisionCommitOutput changeRevisionCommitOutput = JsonHelper.getObject(GerritApiHelper.getChangeRevisionCommit(processedPRRecord.getReviewNumber()), GetChangeRevisionCommitOutput.class);
 
             //  vi. Populate the fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
             processedPRRecord.setOwner(changeDetailOutput.owner.username); // TODO: Update to private fields
@@ -117,8 +117,8 @@ public class PopulateCRSmellData {
         return index - 1;
     }
 
-    private static String getColonDelimitedUpdatedFilesList(String changeId, int commitNumber) throws IOException {
-        String changeRevisionFilesApiOutput = GerritApiHelper.getChangeRevisionFiles(changeId, commitNumber);
+    private static String getColonDelimitedUpdatedFilesList(int reviewNumber, int commitNumber) throws IOException {
+        String changeRevisionFilesApiOutput = GerritApiHelper.getChangeRevisionFiles(reviewNumber, commitNumber);
         List<String> updatedFiles = JsonHelper.getFieldNames(changeRevisionFilesApiOutput);
         updatedFiles.remove(0); // Remove the 'COMMIT_MSG' field
         return updatedFiles.stream().reduce("", (str1, str2) -> str1 + ":" + str2);

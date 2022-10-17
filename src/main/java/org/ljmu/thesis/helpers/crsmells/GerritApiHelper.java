@@ -3,22 +3,22 @@ package org.ljmu.thesis.helpers.crsmells;
 import java.io.IOException;
 
 public class GerritApiHelper {
-    public static String getChangeDetail(String changeId) throws IOException {
-        String uri = String.format("https://git.eclipse.org/r/changes/%s/detail", changeId);
+    public static String getChangeDetail(int reviewNumber) throws IOException {
+        String uri = String.format("https://git.eclipse.org/r/changes/%d/detail", reviewNumber);
         return ApiHelper.get(uri);
     }
 
-    public static String getChangeRevisionCommit(String changeId) throws IOException {
-        return getChangeRevisionCommit(changeId, 1);
+    public static String getChangeRevisionCommit(int reviewNumber) throws IOException {
+        return getChangeRevisionCommit(reviewNumber, 1);
     }
 
-    public static String getChangeRevisionCommit(String changeId, int commitNumber) throws IOException {
-        String uri = String.format("https://git.eclipse.org/r/changes/%s/revisions/%d/commit", changeId, commitNumber);
+    public static String getChangeRevisionCommit(int reviewNumber, int commitNumber) throws IOException {
+        String uri = String.format("https://git.eclipse.org/r/changes/%d/revisions/%d/commit", reviewNumber, commitNumber);
         return ApiHelper.get(uri);
     }
 
-    public static String getChangeRevisionFiles(String changeId, int commitNumber) throws IOException {
-        String uri = String.format("https://git.eclipse.org/r/changes/%s/revisions/%d/files", changeId, commitNumber);
+    public static String getChangeRevisionFiles(int reviewNumber, int commitNumber) throws IOException {
+        String uri = String.format("https://git.eclipse.org/r/changes/%d/revisions/%d/files", reviewNumber, commitNumber);
         return ApiHelper.get(uri);
     }
 }
