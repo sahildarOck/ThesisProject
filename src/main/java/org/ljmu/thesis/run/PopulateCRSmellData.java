@@ -13,6 +13,7 @@ import org.ljmu.thesis.model.crsmells.RawPRRecord;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,7 +31,7 @@ public class PopulateCRSmellData {
 
     public static void main(String[] args) {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "40");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "50");
             long start = System.currentTimeMillis();
             populate();
             long end = System.currentTimeMillis();
@@ -44,8 +45,8 @@ public class PopulateCRSmellData {
         //  1. Get all RawPRRecords
         List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
-        Map<String, Map<String, Integer>> ownerReviewersReviewCountMap = new HashMap<>();
-        Map<String, Integer> ownerPRCountMap = new HashMap<>();
+        ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
+        ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
 
         populateExistingFieldsInProcessedPRRecordsFromRawPRRecords(rawPRRecords, processedPRRecords);
 
@@ -70,7 +71,7 @@ public class PopulateCRSmellData {
                 //  vi.a. Init/Update ownerReviewersReviewCountMap
                 String owner = changeDetailOutput.getOwner().getName();
                 List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, owner); // TODO: Update to private fields
-                Map<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(owner) ? ownerReviewersReviewCountMap.get(owner) : new HashMap<>();
+                ConcurrentHashMap<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(owner) ? ownerReviewersReviewCountMap.get(owner) : new ConcurrentHashMap<>();
                 filteredReviewersList.forEach(r -> {
                     int reviewerForThisAuthorReviewCount = reviewersReviewCountMap.containsKey(r) ? reviewersReviewCountMap.get(r) : 0;
                     reviewersReviewCountMap.put(r, reviewerForThisAuthorReviewCount + 1);
@@ -130,7 +131,7 @@ public class PopulateCRSmellData {
         }
     }
 
-    private static void deriveAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords, Map<String, Map<String, Integer>> ownerReviewersReviewCountMap, Map<String, Integer> ownerPRCountMap) {
+    private static void deriveAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords, ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap, ConcurrentHashMap<String, Integer> ownerPRCountMap) {
         processedPRRecords.parallelStream().forEach(pr -> {
             //  vii. Derive the CRSmells derived fields and populate them for OutputPRRecord
             pr.setLackOfCRCRSmell(pr.getReviewersList().isEmpty());
@@ -144,7 +145,7 @@ public class PopulateCRSmellData {
             if (ownerPRCount < REVIEW_BUDDIES_TOTAL_PRS_BY_AUTHOR_THRESHOLD) {
                 return;
             }
-            Map<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.get(pr.getOwner());
+            ConcurrentHashMap<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.get(pr.getOwner());
             boolean reviewBuddiesCRSmell = pr.getReviewersList().stream().anyMatch(r -> reviewersReviewCountMap.get(r) > ownerPRCount / 2);
             pr.setReviewBuddiesCRSmell(reviewBuddiesCRSmell);
         });
