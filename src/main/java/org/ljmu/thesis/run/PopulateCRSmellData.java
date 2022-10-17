@@ -69,8 +69,8 @@ public class PopulateCRSmellData {
 
                 //  vi.a. Init/Update ownerReviewersReviewCountMap
                 String owner = changeDetailOutput.getOwner().getName();
-                List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, changeDetailOutput.getOwner().getName()); // TODO: Update to private fields
-                Map<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(pr.getOwner()) ? ownerReviewersReviewCountMap.get(pr.getOwner()) : new HashMap<>();
+                List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, owner); // TODO: Update to private fields
+                Map<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(owner) ? ownerReviewersReviewCountMap.get(owner) : new HashMap<>();
                 filteredReviewersList.forEach(r -> {
                     int reviewerForThisAuthorReviewCount = reviewersReviewCountMap.containsKey(r) ? reviewersReviewCountMap.get(r) : 0;
                     reviewersReviewCountMap.put(r, reviewerForThisAuthorReviewCount + 1);
