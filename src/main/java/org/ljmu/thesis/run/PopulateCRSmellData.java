@@ -37,14 +37,14 @@ public class PopulateCRSmellData {
 
     private static final List<String> IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT = Arrays.asList(
             "error: failed to delete '[/|a-z|A-Z|.|_|0-9]+': Directory not empty",
-            "rm: \\|{2}: No such file or directory\\nrm: true: No such file or directory"
+            "rm: \\|{2}: No such file or directory\\nrm: true: No such file or directory\\n(rm: [after|before]+WorkTree_[0-9|a-z]+: No such file or directory)?"
     );
 
     private static final String IGNORE_CREATE_WORKTREE_PROCESS_OUTPUT = "Preparing worktree \\(detached HEAD [0-9|a-z]+\\)\\nUpdating files: 100% \\([0-9]+\\/[0-9]+\\), done.\\nHEAD is now at [0-9|a-z]+ First commited as [after|before]+[0-9|a-z|_]+";
 
     public static void main(String[] args) {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "50");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "30");
             long start = System.currentTimeMillis();
             populate();
             long end = System.currentTimeMillis();
@@ -56,7 +56,7 @@ public class PopulateCRSmellData {
 
     public static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 10);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
