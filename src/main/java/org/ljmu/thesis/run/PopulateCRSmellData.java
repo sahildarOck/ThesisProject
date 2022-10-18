@@ -15,6 +15,7 @@ import org.ljmu.thesis.model.crsmells.GetChangeDetailOutput;
 import org.ljmu.thesis.model.crsmells.GetChangeRevisionCommitOutput;
 import org.ljmu.thesis.model.crsmells.RawPRRecord;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PopulateCRSmellData {
@@ -32,6 +34,13 @@ public class PopulateCRSmellData {
     private static final int SLEEPING_REVIEW_THRESHOLD = 2;
     private static final int LOC_CHANGED_THRESHOLD = 500;
     private static final int REVIEW_BUDDIES_TOTAL_PRS_BY_AUTHOR_THRESHOLD = 50;
+
+    private static final List<String> IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT = Arrays.asList(
+            "error: failed to delete '[/|a-z|A-Z|.|_|0-9]+': Directory not empty",
+            "rm: \\|{2}: No such file or directory\\nrm: true: No such file or directory"
+    );
+
+    private static final String IGNORE_CREATE_WORKTREE_PROCESS_OUTPUT = "Preparing worktree \\(detached HEAD [0-9|a-z]+\\)\\nUpdating files: 100% \\([0-9]+\\/[0-9]+\\), done.\\nHEAD is now at [0-9|a-z]+ First commited as [after|before]+[0-9|a-z|_]+";
 
     public static void main(String[] args) {
         try {
@@ -47,7 +56,7 @@ public class PopulateCRSmellData {
 
     public static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 10);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
@@ -101,6 +110,7 @@ public class PopulateCRSmellData {
                 prUpdated.setCodeSmellsIncreased(prUpdated.hasAtLeastOneUpdatedJavaFile() ? codeSmellsDifferenceCount > 0 : null);
 
                 LOGGER.info(String.format("Object updated after Gerrit calls and code smells computation for review number: [%d]", pr.getReviewNumber()));
+
             } catch (Exception e) {
                 if (pr != null) {
                     LOGGER.log(Level.SEVERE, String.format("Failure occurred for review number: [%d]. Details below: ", pr.getReviewNumber()));
@@ -196,17 +206,20 @@ public class PopulateCRSmellData {
     }
 
     private static int getCodeSmellsDifferenceCount(String beforeCommitId, String afterCommitId, List<String> filePaths) throws IOException {
-        return getCodeSmellsCount(afterCommitId, filePaths) - getCodeSmellsCount(beforeCommitId, filePaths);
+        return getCodeSmellsCount(afterCommitId, "afterWorkTree_" + afterCommitId, filePaths) - getCodeSmellsCount(beforeCommitId, "beforeWorkTree_" + beforeCommitId, filePaths);
     }
 
-    private static int getCodeSmellsCount(String commitId, List<String> filePaths) throws IOException {
+    private static int getCodeSmellsCount(String commitId, String workTreeName, List<String> filePaths) throws IOException {
         String gitReposProjectPath = PathHelper.getGitReposProjectPath();
-        String gitCheckoutOutput = GitHelper.checkout(gitReposProjectPath, commitId);
-        LOGGER.info(String.format("Git checkout Output: %s", gitCheckoutOutput));
+        String createWorktreeProcessOutput = GitHelper.createNewWorkTree(gitReposProjectPath, workTreeName, commitId);
+        if (shouldBeIgnored(createWorktreeProcessOutput, IGNORE_CREATE_WORKTREE_PROCESS_OUTPUT)) {
+            LOGGER.info(String.format("Git createWorktreeProcessOutput: %s", createWorktreeProcessOutput));
+        }
 
-        return filePaths.parallelStream().map(p -> {
+        String workTreeProjectPath = gitReposProjectPath + File.separator + workTreeName;
+        int codeSmellsCount = filePaths.parallelStream().map(p -> {
             try {
-                String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(gitReposProjectPath, p);
+                String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(workTreeProjectPath, p);
                 if (outputJson.contains("No such file")) {
                     return 0;
                 }
@@ -218,9 +231,35 @@ public class PopulateCRSmellData {
                 return 0;
             }
         }).reduce(0, (count1, count2) -> count1 + count2);
+
+        List<String> removeWorkTreeProcessOutputs = GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
+        removeWorkTreeProcessOutputs.forEach(o -> {
+            if (shouldBeIgnored(o, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
+                return;
+            }
+            LOGGER.log(Level.SEVERE, o);
+        });
+        return codeSmellsCount;
+    }
+
+    private static boolean shouldBeIgnored(String output, List<String> ignoredOutputList) {
+        for (String ignoreOutputRegex : ignoredOutputList) {
+            if (shouldBeIgnored(output, ignoreOutputRegex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean shouldBeIgnored(String output, String ignoreOutputRegex) {
+        Pattern pattern = Pattern.compile(ignoreOutputRegex);
+        if (output.isEmpty() || pattern.matcher(output).matches()) {
+            return true;
+        }
+        return false;
     }
 
     private static void validateGitCheckout(String gitCheckoutOutput) {
-
+        //TODO: Implement and use
     }
 }

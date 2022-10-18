@@ -16,10 +16,10 @@ public class GitHelper {
         return ProcessBuilderHelper.startProcessAndGetOutput(projectPath, command);
     }
 
-    public static String removeWorkTree(String projectPath, String worktreeName) throws IOException {
+    public static List<String> removeWorkTree(String projectPath, String worktreeName) throws IOException {
         List<List<String>> commands = new ArrayList<>();
         commands.add(Arrays.asList("git", "worktree", "remove", "-f", "-f", worktreeName));
-        commands.add(Arrays.asList("rm", "-r", worktreeName));
+        commands.add(Arrays.asList("rm", "-r", "||", "true", worktreeName));
         return ProcessBuilderHelper.startProcessesAndGetOutput(projectPath, commands);
     }
 }
