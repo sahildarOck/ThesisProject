@@ -23,16 +23,17 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
     private String subject;
     private String message;
 
-    // Derived during CRSmells execution
-    private boolean lackOfCRCRSmell;
-    private boolean pingPongCRSmell;
-    private boolean sleepingReviewsCRSmell;
-    private boolean missingContextCRSmell;
-    private boolean largeChangesetsCRSmell;
-    private boolean reviewBuddiesCRSmell;
+    // Computed during CRSmells execution
+    private boolean crSmellLackOfCR;
+    private boolean crSmellPingPong;
+    private boolean crSmellSleepingReviews;
+    private boolean crSmellMissingContext;
+    private boolean crSmellLargeChangesets;
+    private boolean crSmellReviewBuddies;
 
-    // Derived during Code Smell execution
-    private Boolean increasedCodeSmells;
+    // Computed during Code Smell execution
+    private Integer codeSmellsDifferenceCount;
+    private Boolean codeSmellsIncreased;
 
     public int getReviewNumber() {
         return reviewNumber;
@@ -90,7 +91,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.updatedFilesList = updatedFilesList;
     }
 
-    public boolean isAtLeastOneUpdatedJavaFile() {
+    public boolean hasAtLeastOneUpdatedJavaFile() {
         return atLeastOneUpdatedJavaFile;
     }
 
@@ -154,68 +155,81 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.message = message;
     }
 
-    public boolean isLackOfCRCRSmell() {
-        return lackOfCRCRSmell;
+    public boolean isCrSmellLackOfCR() {
+        return crSmellLackOfCR;
     }
 
-    public void setLackOfCRCRSmell(boolean lackOfCRCRSmell) {
-        this.lackOfCRCRSmell = lackOfCRCRSmell;
+    public void setCrSmellLackOfCR(boolean crSmellLackOfCR) {
+        this.crSmellLackOfCR = crSmellLackOfCR;
     }
 
-    public boolean isPingPongCRSmell() {
-        return pingPongCRSmell;
+    public boolean isCrSmellPingPong() {
+        return crSmellPingPong;
     }
 
-    public void setPingPongCRSmell(boolean pingPongCRSmell) {
-        this.pingPongCRSmell = pingPongCRSmell;
+    public void setCrSmellPingPong(boolean crSmellPingPong) {
+        this.crSmellPingPong = crSmellPingPong;
     }
 
-    public boolean isSleepingReviewsCRSmell() {
-        return sleepingReviewsCRSmell;
+    public boolean isCrSmellSleepingReviews() {
+        return crSmellSleepingReviews;
     }
 
-    public void setSleepingReviewsCRSmell(boolean sleepingReviewsCRSmell) {
-        this.sleepingReviewsCRSmell = sleepingReviewsCRSmell;
+    public void setCrSmellSleepingReviews(boolean crSmellSleepingReviews) {
+        this.crSmellSleepingReviews = crSmellSleepingReviews;
     }
 
-    public boolean isMissingContextCRSmell() {
-        return missingContextCRSmell;
+    public boolean isCrSmellMissingContext() {
+        return crSmellMissingContext;
     }
 
-    public void setMissingContextCRSmell(boolean missingContextCRSmell) {
-        this.missingContextCRSmell = missingContextCRSmell;
+    public void setCrSmellMissingContext(boolean crSmellMissingContext) {
+        this.crSmellMissingContext = crSmellMissingContext;
     }
 
-    public boolean isLargeChangesetsCRSmell() {
-        return largeChangesetsCRSmell;
+    public boolean isCrSmellLargeChangesets() {
+        return crSmellLargeChangesets;
     }
 
-    public void setLargeChangesetsCRSmell(boolean largeChangesetsCRSmell) {
-        this.largeChangesetsCRSmell = largeChangesetsCRSmell;
+    public void setCrSmellLargeChangesets(boolean crSmellLargeChangesets) {
+        this.crSmellLargeChangesets = crSmellLargeChangesets;
     }
 
-    public boolean isReviewBuddiesCRSmell() {
-        return reviewBuddiesCRSmell;
+    public boolean isCrSmellReviewBuddies() {
+        return crSmellReviewBuddies;
     }
 
-    public void setReviewBuddiesCRSmell(boolean reviewBuddiesCRSmell) {
-        this.reviewBuddiesCRSmell = reviewBuddiesCRSmell;
+    public void setCrSmellReviewBuddies(boolean crSmellReviewBuddies) {
+        this.crSmellReviewBuddies = crSmellReviewBuddies;
     }
 
-    public Boolean getIncreasedCodeSmells() {
-        return increasedCodeSmells;
+    public int getCodeSmellsDifferenceCount() {
+        return codeSmellsDifferenceCount;
     }
 
-    public void setIncreasedCodeSmells(Boolean increasedCodeSmells) {
-        this.increasedCodeSmells = increasedCodeSmells;
+    public void setCodeSmellsDifferenceCount(int codeSmellsDifferenceCount) {
+        this.codeSmellsDifferenceCount = codeSmellsDifferenceCount;
+    }
+
+    public Boolean getCodeSmellsIncreased() {
+        return codeSmellsIncreased;
+    }
+
+    public void setCodeSmellsIncreased(Boolean codeSmellsIncreased) {
+        this.codeSmellsIncreased = codeSmellsIncreased;
+    }
+
+    private String getStringOutput(Object obj) {
+        return obj == null ? "NA" : String.valueOf(obj);
     }
 
     @Override
     public String[] getRecords() {
         String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId,
                 String.valueOf(atLeastOneUpdatedJavaFile), createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
-                subject, message, String.valueOf(lackOfCRCRSmell), String.valueOf(pingPongCRSmell), String.valueOf(sleepingReviewsCRSmell), String.valueOf(missingContextCRSmell),
-                String.valueOf(largeChangesetsCRSmell), String.valueOf(reviewBuddiesCRSmell)};
+                subject, message, String.valueOf(crSmellLackOfCR), String.valueOf(crSmellPingPong), String.valueOf(crSmellSleepingReviews), String.valueOf(crSmellMissingContext),
+                String.valueOf(crSmellLargeChangesets), String.valueOf(crSmellReviewBuddies),
+                getStringOutput(codeSmellsDifferenceCount), getStringOutput(codeSmellsIncreased)};
         return records;
     }
 

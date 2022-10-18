@@ -17,4 +17,18 @@ public class ProcessBuilderHelper {
 
         return IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8);
     }
+
+    public static String startProcessesAndGetOutput(String workingDirectory, List<List<String>> commands) throws IOException {
+        File file = new File(workingDirectory);
+        ProcessBuilder pb = new ProcessBuilder();
+        StringBuffer stringBuffer = new StringBuffer();
+        for (List<String> command : commands) {
+            pb.command(command);
+            pb.directory(file);
+            pb.redirectErrorStream(true);
+            stringBuffer.append(IOUtils.toString(pb.start().getInputStream(), StandardCharsets.UTF_8));
+            stringBuffer.append("\n");
+        }
+        return stringBuffer.toString();
+    }
 }

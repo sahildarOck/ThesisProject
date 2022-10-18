@@ -26,10 +26,10 @@ public class PopulateCodeSmellData {
     public static void main(String[] args) throws IOException {
         initProperties();
 
-        int initialSmellsCount = getSmellsCount(beforeCommitId, filePath);
+        int initialSmellsCount = getSmellsCount(beforeCommitId, filePath, "newBeforeWorktree");
         LOGGER.info(String.format("Initial Smells Count: %d", initialSmellsCount));
 
-        int finalSmellsCount = getSmellsCount(afterCommitId, filePath);
+        int finalSmellsCount = getSmellsCount(afterCommitId, filePath, "newAfterWorktree");
         LOGGER.info(String.format("Final Smells Count: %d", finalSmellsCount));
 
         LOGGER.info(String.format("Is Increased: %s", finalSmellsCount > initialSmellsCount));
@@ -39,14 +39,16 @@ public class PopulateCodeSmellData {
         projectPath = PathHelper.getGitReposProjectPath();
     }
 
-    private static int getSmellsCount(String commitId, String filePath) throws IOException {
-        String gitCheckoutOutput = GitHelper.checkout(projectPath, commitId);
-        LOGGER.info(String.format("Git checkout Output: %s", gitCheckoutOutput));
-        String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(projectPath, filePath);
+    private static int getSmellsCount(String commitId, String filePath, String workTreeName) throws IOException {
+        String gitCheckoutOutput = GitHelper.createNewWorkTree(projectPath, workTreeName, commitId);
+        LOGGER.info(String.format("Git createNewWorkTree Output: %s", gitCheckoutOutput));
+        String workingProjectPath = projectPath + File.separator + workTreeName;
+        String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(workingProjectPath, filePath);
         // LOGGER.info(outputJson);
         if (outputJson.contains("No such file")) {
             return 0;
         }
+        LOGGER.info(String.format("Git removeWorkTree Output: %s", GitHelper.removeWorkTree(projectPath, workTreeName)));
         PmdReport report = JsonHelper.getObject(outputJson, PmdReport.class);
         return Arrays.stream(report.files).map(file -> file.violations.length).reduce(0, (len1, len2) -> len1 + len2);
     }

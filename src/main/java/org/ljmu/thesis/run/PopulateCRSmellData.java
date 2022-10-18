@@ -4,15 +4,21 @@ import org.ljmu.thesis.commons.DateUtils;
 import org.ljmu.thesis.commons.Utils;
 import org.ljmu.thesis.helpers.CsvHelper;
 import org.ljmu.thesis.helpers.JsonHelper;
+import org.ljmu.thesis.helpers.PathHelper;
+import org.ljmu.thesis.helpers.codesmells.GitHelper;
+import org.ljmu.thesis.helpers.codesmells.PmdHelper;
 import org.ljmu.thesis.helpers.crsmells.GerritApiHelper;
 import org.ljmu.thesis.model.ProcessedPRRecord;
+import org.ljmu.thesis.model.codesmells.PmdReport;
 import org.ljmu.thesis.model.crsmells.Developer;
 import org.ljmu.thesis.model.crsmells.GetChangeDetailOutput;
 import org.ljmu.thesis.model.crsmells.GetChangeRevisionCommitOutput;
 import org.ljmu.thesis.model.crsmells.RawPRRecord;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -26,8 +32,6 @@ public class PopulateCRSmellData {
     private static final int SLEEPING_REVIEW_THRESHOLD = 2;
     private static final int LOC_CHANGED_THRESHOLD = 500;
     private static final int REVIEW_BUDDIES_TOTAL_PRS_BY_AUTHOR_THRESHOLD = 50;
-
-    private static final int MAX_RECORDS_TO_INCLUDE = 200;
 
     public static void main(String[] args) {
         try {
@@ -91,7 +95,12 @@ public class PopulateCRSmellData {
                 prUpdated.setSubject(changeRevisionCommitOutput.getSubject().trim());
                 prUpdated.setMessage(changeRevisionCommitOutput.getMessage().trim());
 
-                LOGGER.info(String.format("Object updated after Gerrit calls for review number: [%d]", pr.getReviewNumber()));
+                // Compute and populate the Code smells difference count
+                int codeSmellsDifferenceCount = getCodeSmellsDifferenceCount(prUpdated.getBeforeCommitId(), prUpdated.getAfterCommitId(), prUpdated.getUpdatedFilesList());
+                prUpdated.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
+                prUpdated.setCodeSmellsIncreased(prUpdated.hasAtLeastOneUpdatedJavaFile() ? codeSmellsDifferenceCount > 0 : null);
+
+                LOGGER.info(String.format("Object updated after Gerrit calls and code smells computation for review number: [%d]", pr.getReviewNumber()));
             } catch (Exception e) {
                 if (pr != null) {
                     LOGGER.log(Level.SEVERE, String.format("Failure occurred for review number: [%d]. Details below: ", pr.getReviewNumber()));
@@ -101,7 +110,7 @@ public class PopulateCRSmellData {
             return prUpdated;
         }).collect(Collectors.toList());
 
-        deriveAndPopulateCRSmellsInProcessedPRRecords(processedPRRecords, ownerReviewersReviewCountMap, ownerPRCountMap);
+        computeAndPopulateCRSmellsInProcessedPRRecords(processedPRRecords, ownerReviewersReviewCountMap, ownerPRCountMap);
 
         CsvHelper.writeOutputCsv(processedPRRecords);
     }
@@ -131,14 +140,14 @@ public class PopulateCRSmellData {
         }
     }
 
-    private static void deriveAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords, ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap, ConcurrentHashMap<String, Integer> ownerPRCountMap) {
+    private static void computeAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords, ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap, ConcurrentHashMap<String, Integer> ownerPRCountMap) {
         processedPRRecords.parallelStream().forEach(pr -> {
             //  vii. Derive the CRSmells derived fields and populate them for OutputPRRecord
-            pr.setLackOfCRCRSmell(pr.getReviewersList().isEmpty());
-            pr.setPingPongCRSmell(pr.getIterationCount() > PING_PONG_THRESHOLD);
-            pr.setSleepingReviewsCRSmell(pr.getMergedDate().compareTo(pr.getCreatedDate()) > SLEEPING_REVIEW_THRESHOLD);
-            pr.setMissingContextCRSmell(isMissingContextCRSmell(pr.getSubject(), pr.getMessage()));
-            pr.setLargeChangesetsCRSmell(pr.getLocChanged() > LOC_CHANGED_THRESHOLD);
+            pr.setCrSmellLackOfCR(pr.getReviewersList().isEmpty());
+            pr.setCrSmellPingPong(pr.getIterationCount() > PING_PONG_THRESHOLD);
+            pr.setCrSmellSleepingReviews(pr.getMergedDate().compareTo(pr.getCreatedDate()) > SLEEPING_REVIEW_THRESHOLD);
+            pr.setCrSmellMissingContext(isMissingContextCRSmell(pr.getSubject(), pr.getMessage()));
+            pr.setCrSmellLargeChangesets(pr.getLocChanged() > LOC_CHANGED_THRESHOLD);
 
             //  Deriving review_buddies_cr_smell
             int ownerPRCount = ownerPRCountMap.get(pr.getOwner());
@@ -147,7 +156,7 @@ public class PopulateCRSmellData {
             }
             ConcurrentHashMap<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.get(pr.getOwner());
             boolean reviewBuddiesCRSmell = pr.getReviewersList().stream().anyMatch(r -> reviewersReviewCountMap.get(r) > ownerPRCount / 2);
-            pr.setReviewBuddiesCRSmell(reviewBuddiesCRSmell);
+            pr.setCrSmellReviewBuddies(reviewBuddiesCRSmell);
         });
     }
 
@@ -180,5 +189,38 @@ public class PopulateCRSmellData {
         }
         String filteredMessage = message.split("[\n]*Change-Id")[0];
         return subject.equals(filteredMessage);
+    }
+
+    private static void computeAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords) {
+
+    }
+
+    private static int getCodeSmellsDifferenceCount(String beforeCommitId, String afterCommitId, List<String> filePaths) throws IOException {
+        return getCodeSmellsCount(afterCommitId, filePaths) - getCodeSmellsCount(beforeCommitId, filePaths);
+    }
+
+    private static int getCodeSmellsCount(String commitId, List<String> filePaths) throws IOException {
+        String gitReposProjectPath = PathHelper.getGitReposProjectPath();
+        String gitCheckoutOutput = GitHelper.checkout(gitReposProjectPath, commitId);
+        LOGGER.info(String.format("Git checkout Output: %s", gitCheckoutOutput));
+
+        return filePaths.parallelStream().map(p -> {
+            try {
+                String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(gitReposProjectPath, p);
+                if (outputJson.contains("No such file")) {
+                    return 0;
+                }
+                PmdReport report = JsonHelper.getObject(outputJson, PmdReport.class);
+                return Arrays.stream(report.files).map(file -> file.violations.length).reduce(0, (len1, len2) -> len1 + len2);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, String.format("Failure occurred for commit id: [%d]. Details below: ", commitId));
+                e.printStackTrace();
+                return 0;
+            }
+        }).reduce(0, (count1, count2) -> count1 + count2);
+    }
+
+    private static void validateGitCheckout(String gitCheckoutOutput) {
+
     }
 }
