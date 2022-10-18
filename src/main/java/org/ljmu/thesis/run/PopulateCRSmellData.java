@@ -79,8 +79,8 @@ public class PopulateCRSmellData {
                 ownerReviewersReviewCountMap.put(owner, reviewersReviewCountMap);
 
                 //  vi.b. Init/Update authorReviewCountMap
-                int ownerReviewCount = ownerPRCountMap.containsKey(owner) ? ownerPRCountMap.get(owner) : 1;
-                ownerPRCountMap.put(owner, ownerReviewCount);
+                int ownerReviewCount = ownerPRCountMap.containsKey(owner) ? ownerPRCountMap.get(owner) : 0;
+                ownerPRCountMap.put(owner, ownerReviewCount + 1);
 
                 //  vi.c. Populate other fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
                 prUpdated.setOwner(owner);
