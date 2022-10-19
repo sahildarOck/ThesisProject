@@ -22,4 +22,9 @@ public class GitHelper {
         commands.add(Arrays.asList("rm", "-r", "||", "true", worktreeName));
         return ProcessBuilderHelper.startProcessesAndGetOutput(projectPath, commands);
     }
+
+    public static String pruneWorktree(String projectPath) throws IOException {
+        List<String> command = Arrays.asList("git", "worktree", "prune");
+        return ProcessBuilderHelper.startProcessAndGetOutput(projectPath, command);
+    }
 }

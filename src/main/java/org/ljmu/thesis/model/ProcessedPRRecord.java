@@ -207,7 +207,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         return codeSmellsDifferenceCount;
     }
 
-    public void setCodeSmellsDifferenceCount(int codeSmellsDifferenceCount) {
+    public void setCodeSmellsDifferenceCount(Integer codeSmellsDifferenceCount) {
         this.codeSmellsDifferenceCount = codeSmellsDifferenceCount;
     }
 

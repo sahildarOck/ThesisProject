@@ -37,12 +37,12 @@ public class PopulateCRSmellData {
 
     private static final List<String> IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT = Arrays.asList(
             "error: failed to delete '[/|a-z|A-Z|.|_|0-9]+': Directory not empty",
-            "rm: \\|{2}: No such file or directory\\nrm: true: No such file or directory\\n(rm: [after|before]+WorkTree_[0-9|a-z]+: No such file or directory)?"
+            "rm: \\|{2}: No such file or directory\\nrm: true: No such file or directory(\\nrm: [after|before]+WorkTree_[0-9|a-z]+: No such file or directory)?"
     );
 
     private static final String IGNORE_CREATE_WORKTREE_PROCESS_OUTPUT = "Preparing worktree \\(detached HEAD [0-9|a-z]+\\)\\nUpdating files: 100% \\([0-9]+\\/[0-9]+\\), done.\\nHEAD is now at [0-9|a-z]+ First commited as [after|before]+[0-9|a-z|_]+";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         try {
             System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "30");
             long start = System.currentTimeMillis();
@@ -51,12 +51,14 @@ public class PopulateCRSmellData {
             LOGGER.info(String.format("Time taken in minutes to finish: [%d]", TimeUnit.MILLISECONDS.toMinutes(end - start)));
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            cleanUp();
         }
     }
 
     public static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(4, 11);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
@@ -105,9 +107,9 @@ public class PopulateCRSmellData {
                 prUpdated.setMessage(changeRevisionCommitOutput.getMessage().trim());
 
                 // Compute and populate the Code smells difference count
-                int codeSmellsDifferenceCount = getCodeSmellsDifferenceCount(prUpdated.getBeforeCommitId(), prUpdated.getAfterCommitId(), prUpdated.getUpdatedFilesList());
+                Integer codeSmellsDifferenceCount = getCodeSmellsDifferenceCount(prUpdated);
                 prUpdated.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
-                prUpdated.setCodeSmellsIncreased(prUpdated.hasAtLeastOneUpdatedJavaFile() ? codeSmellsDifferenceCount > 0 : null);
+                prUpdated.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
 
                 LOGGER.info(String.format("Object updated after Gerrit calls and code smells computation for review number: [%d]", pr.getReviewNumber()));
 
@@ -123,6 +125,11 @@ public class PopulateCRSmellData {
         computeAndPopulateCRSmellsInProcessedPRRecords(processedPRRecords, ownerReviewersReviewCountMap, ownerPRCountMap);
 
         CsvHelper.writeOutputCsv(processedPRRecords);
+    }
+
+    private static void cleanUp() throws IOException {
+        // git worktree prune
+        GitHelper.pruneWorktree(PathHelper.getGitReposProjectPath());
     }
 
     private static void populateExistingFieldsInProcessedPRRecordsFromRawPRRecords(List<RawPRRecord> rawPRRecords, List<ProcessedPRRecord> processedPRRecords) {
@@ -201,18 +208,32 @@ public class PopulateCRSmellData {
         return subject.equals(filteredMessage);
     }
 
-    private static void computeAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords) {
+    private static Integer getCodeSmellsDifferenceCount(ProcessedPRRecord prRecord) throws IOException {
+        if (!prRecord.hasAtLeastOneUpdatedJavaFile()) {
+            return null;
+        }
 
+        //TODO: Remove this after debugging
+        String afterCommitId = "29102800c7e57a7c6d29097ee54e3204f5de42e2";
+        String beforeCommitId = "6ee8a8ba9bb2e56baf6c808d533c67530cbc94c9";
+
+//        String afterCommitId = prRecord.getAfterCommitId();
+//        String beforeCommitId = prRecord.getBeforeCommitId();
+        List<String> filePaths = prRecord.getUpdatedFilesList();
+        int afterReviewCodeSmellsCount = getCodeSmellsCount(afterCommitId, "afterWorkTree_" + afterCommitId, filePaths, prRecord.getReviewNumber(), prRecord.getIterationCount());
+        int beforeReviewCodeSmellsCount = getCodeSmellsCount(prRecord.getBeforeCommitId(), "beforeWorkTree_" + beforeCommitId, filePaths, prRecord.getReviewNumber(), prRecord.getIterationCount());
+
+        LOGGER.info(String.format("beforeReviewCodeSmellsCount: [%d], afterReviewCodeSmellsCount: [%d] for review number: [%d]", beforeReviewCodeSmellsCount, afterReviewCodeSmellsCount, prRecord.getReviewNumber()));
+
+        return afterReviewCodeSmellsCount - beforeReviewCodeSmellsCount;
     }
 
-    private static int getCodeSmellsDifferenceCount(String beforeCommitId, String afterCommitId, List<String> filePaths) throws IOException {
-        return getCodeSmellsCount(afterCommitId, "afterWorkTree_" + afterCommitId, filePaths) - getCodeSmellsCount(beforeCommitId, "beforeWorkTree_" + beforeCommitId, filePaths);
-    }
-
-    private static int getCodeSmellsCount(String commitId, String workTreeName, List<String> filePaths) throws IOException {
+    private static int getCodeSmellsCount(String commitId, String workTreeName, List<String> filePaths, int reviewNumber, int iterationCount) throws IOException {
         String gitReposProjectPath = PathHelper.getGitReposProjectPath();
         String createWorktreeProcessOutput = GitHelper.createNewWorkTree(gitReposProjectPath, workTreeName, commitId);
-        if (shouldBeIgnored(createWorktreeProcessOutput, IGNORE_CREATE_WORKTREE_PROCESS_OUTPUT)) {
+
+        // Validating create worktree process output
+        if (!isGitWorktreeCreationSuccessful(workTreeName.contains("before") ? true : false, reviewNumber, iterationCount, createWorktreeProcessOutput)) {
             LOGGER.info(String.format("Git createWorktreeProcessOutput: %s", createWorktreeProcessOutput));
         }
 
@@ -234,7 +255,7 @@ public class PopulateCRSmellData {
 
         List<String> removeWorkTreeProcessOutputs = GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
         removeWorkTreeProcessOutputs.forEach(o -> {
-            if (shouldBeIgnored(o, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
+            if (shouldOutputListBeIgnored(o, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
                 return;
             }
             LOGGER.log(Level.SEVERE, o);
@@ -242,16 +263,16 @@ public class PopulateCRSmellData {
         return codeSmellsCount;
     }
 
-    private static boolean shouldBeIgnored(String output, List<String> ignoredOutputList) {
+    private static boolean shouldOutputListBeIgnored(String output, List<String> ignoredOutputList) {
         for (String ignoreOutputRegex : ignoredOutputList) {
-            if (shouldBeIgnored(output, ignoreOutputRegex)) {
+            if (shouldOutputBeIgnored(output, ignoreOutputRegex)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean shouldBeIgnored(String output, String ignoreOutputRegex) {
+    private static boolean shouldOutputBeIgnored(String output, String ignoreOutputRegex) {
         Pattern pattern = Pattern.compile(ignoreOutputRegex);
         if (output.isEmpty() || pattern.matcher(output).matches()) {
             return true;
@@ -259,7 +280,8 @@ public class PopulateCRSmellData {
         return false;
     }
 
-    private static void validateGitCheckout(String gitCheckoutOutput) {
-        //TODO: Implement and use
+    private static boolean isGitWorktreeCreationSuccessful(boolean isBefore, int reviewNumber, int iterationCount, String gitCheckoutOutput) {
+        String partialSuccessString = String.format("First commited as %s_%d_rev%d", isBefore ? "before" : "after", reviewNumber, isBefore ? 1 : iterationCount);
+        return gitCheckoutOutput.contains(partialSuccessString);
     }
 }

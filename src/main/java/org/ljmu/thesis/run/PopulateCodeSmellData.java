@@ -15,7 +15,7 @@ public class PopulateCodeSmellData {
     private static final Logger LOGGER = Logger.getLogger(PopulateCodeSmellData.class.getName());
 
     // TODO: Read from csv
-    private static String filePath = File.separator + "bundles" + File.separator + "org.eclipse.e4.ui.workbench.renderers.swt" + File.separator + "src" + File.separator + "org"
+    private static String filePath = "bundles" + File.separator + "org.eclipse.e4.ui.workbench.renderers.swt" + File.separator + "src" + File.separator + "org"
             + File.separator + "eclipse" + File.separator + "e4" + File.separator + "ui" + File.separator + "workbench" + File.separator + "renderers" + File.separator + "swt" + File.separator + "MenuManagerRenderer.java";
 
     private static String beforeCommitId = "6ee8a8ba9bb2e56baf6c808d533c67530cbc94c9";
