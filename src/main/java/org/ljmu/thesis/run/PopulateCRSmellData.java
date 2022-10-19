@@ -34,21 +34,19 @@ public class PopulateCRSmellData {
     private static final int SLEEPING_REVIEW_THRESHOLD = 2;
     private static final int LOC_CHANGED_THRESHOLD = 500;
     private static final int REVIEW_BUDDIES_TOTAL_PRS_BY_AUTHOR_THRESHOLD = 50;
-
     private static final List<String> IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT = Arrays.asList(
             "error: failed to delete '[/|a-z|A-Z|.|_|0-9]+': Directory not empty",
             "rm: \\|{2}: No such file or directory\\nrm: true: No such file or directory(\\nrm: [after|before]+WorkTree_[0-9|a-z]+: No such file or directory)?"
     );
-
     private static final String IGNORE_CREATE_WORKTREE_PROCESS_OUTPUT = "Preparing worktree \\(detached HEAD [0-9|a-z]+\\)\\nUpdating files: 100% \\([0-9]+\\/[0-9]+\\), done.\\nHEAD is now at [0-9|a-z]+ First commited as [after|before]+[0-9|a-z|_]+";
 
     public static void main(String[] args) throws IOException {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "30");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "40");
             long start = System.currentTimeMillis();
             populate();
             long end = System.currentTimeMillis();
-            LOGGER.info(String.format("Time taken in minutes to finish: [%d]", TimeUnit.MILLISECONDS.toMinutes(end - start)));
+            LOGGER.info(String.format("Time taken to finish: [%d] seconds", TimeUnit.MILLISECONDS.toSeconds(end - start)));
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -58,7 +56,7 @@ public class PopulateCRSmellData {
 
     public static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(4, 11);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
@@ -212,13 +210,8 @@ public class PopulateCRSmellData {
         if (!prRecord.hasAtLeastOneUpdatedJavaFile()) {
             return null;
         }
-
-        //TODO: Remove this after debugging
-        String afterCommitId = "29102800c7e57a7c6d29097ee54e3204f5de42e2";
-        String beforeCommitId = "6ee8a8ba9bb2e56baf6c808d533c67530cbc94c9";
-
-//        String afterCommitId = prRecord.getAfterCommitId();
-//        String beforeCommitId = prRecord.getBeforeCommitId();
+        String afterCommitId = prRecord.getAfterCommitId();
+        String beforeCommitId = prRecord.getBeforeCommitId();
         List<String> filePaths = prRecord.getUpdatedFilesList();
         int afterReviewCodeSmellsCount = getCodeSmellsCount(afterCommitId, "afterWorkTree_" + afterCommitId, filePaths, prRecord.getReviewNumber(), prRecord.getIterationCount());
         int beforeReviewCodeSmellsCount = getCodeSmellsCount(prRecord.getBeforeCommitId(), "beforeWorkTree_" + beforeCommitId, filePaths, prRecord.getReviewNumber(), prRecord.getIterationCount());
@@ -230,13 +223,19 @@ public class PopulateCRSmellData {
 
     private static int getCodeSmellsCount(String commitId, String workTreeName, List<String> filePaths, int reviewNumber, int iterationCount) throws IOException {
         String gitReposProjectPath = PathHelper.getGitReposProjectPath();
+        long startTime = System.currentTimeMillis(); // TODO: Remove
         String createWorktreeProcessOutput = GitHelper.createNewWorkTree(gitReposProjectPath, workTreeName, commitId);
+        long endTime = System.currentTimeMillis(); // TODO: Remove
+        LOGGER.info(String.format("[%d] Create Worktree took: [%d] seconds", reviewNumber, TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
 
-        // Validating create worktree process output
+
+        // Logging create worktree process output, if issues
         if (!isGitWorktreeCreationSuccessful(workTreeName.contains("before") ? true : false, reviewNumber, iterationCount, createWorktreeProcessOutput)) {
             LOGGER.info(String.format("Git createWorktreeProcessOutput: %s", createWorktreeProcessOutput));
         }
 
+        // Computing code smells
+        startTime = System.currentTimeMillis(); // TODO: Remove
         String workTreeProjectPath = gitReposProjectPath + File.separator + workTreeName;
         int codeSmellsCount = filePaths.parallelStream().map(p -> {
             try {
@@ -252,14 +251,21 @@ public class PopulateCRSmellData {
                 return 0;
             }
         }).reduce(0, (count1, count2) -> count1 + count2);
+        endTime = System.currentTimeMillis(); // TODO: Remove
+        LOGGER.info(String.format("[%d] Computing code smells took: [%d] seconds", reviewNumber, TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
 
+        // Logging remove worktree process output, if issues
+        startTime = System.currentTimeMillis(); // TODO: Remove
         List<String> removeWorkTreeProcessOutputs = GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
+        endTime = System.currentTimeMillis(); // TODO: Remove
+        LOGGER.info(String.format("[%d] Remove Worktree took: [%d] seconds", reviewNumber, TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
         removeWorkTreeProcessOutputs.forEach(o -> {
             if (shouldOutputListBeIgnored(o, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
                 return;
             }
             LOGGER.log(Level.SEVERE, o);
         });
+
         return codeSmellsCount;
     }
 
