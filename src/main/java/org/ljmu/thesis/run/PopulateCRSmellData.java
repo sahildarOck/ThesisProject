@@ -42,7 +42,7 @@ public class PopulateCRSmellData {
 
     public static void main(String[] args) throws IOException {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "40");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "60");
             long start = System.currentTimeMillis();
             populate();
             long end = System.currentTimeMillis();
@@ -122,6 +122,8 @@ public class PopulateCRSmellData {
 
         computeAndPopulateCRSmellsInProcessedPRRecords(processedPRRecords, ownerReviewersReviewCountMap, ownerPRCountMap);
 
+//        computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
+
         CsvHelper.writeOutputCsv(processedPRRecords);
     }
 
@@ -172,6 +174,22 @@ public class PopulateCRSmellData {
             ConcurrentHashMap<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.get(pr.getOwner());
             boolean reviewBuddiesCRSmell = pr.getReviewersList().stream().anyMatch(r -> reviewersReviewCountMap.get(r) > ownerPRCount / 2);
             pr.setCrSmellReviewBuddies(reviewBuddiesCRSmell);
+        });
+    }
+
+    private static void computeAndPopulateCodeSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords) {
+        processedPRRecords.parallelStream().forEach(pr -> {
+            // Compute and populate the Code smells difference count
+            Integer codeSmellsDifferenceCount = null;
+            try {
+                codeSmellsDifferenceCount = getCodeSmellsDifferenceCount(pr);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            pr.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
+            pr.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
+
+            LOGGER.info(String.format("Object updated after Gerrit calls and code smells computation for review number: [%d]", pr.getReviewNumber()));
         });
     }
 
