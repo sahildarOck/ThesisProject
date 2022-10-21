@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-public class PopulateCodeSmellData {
-    private static final Logger LOGGER = Logger.getLogger(PopulateCodeSmellData.class.getName());
+public class Debug {
+    private static final Logger LOGGER = Logger.getLogger(Debug.class.getName());
 
     // TODO: Read from csv
     private static String filePath = "bundles" + File.separator + "org.eclipse.e4.ui.workbench.renderers.swt" + File.separator + "src" + File.separator + "org"

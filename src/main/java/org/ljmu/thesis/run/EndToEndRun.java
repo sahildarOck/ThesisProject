@@ -27,8 +27,8 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class PopulateCRSmellData {
-    private static final Logger LOGGER = Logger.getLogger(PopulateCRSmellData.class.getName());
+public class EndToEndRun {
+    private static final Logger LOGGER = Logger.getLogger(EndToEndRun.class.getName());
     private static final List<String> IGNORE_REVIEWERS_LIST = Arrays.asList("CI Bot", "Eclipse Genie", "Gerrit Code Review @ Eclipse.org");
     private static final int PING_PONG_THRESHOLD = 3;
     private static final int SLEEPING_REVIEW_THRESHOLD = 2;
@@ -54,7 +54,7 @@ public class PopulateCRSmellData {
         }
     }
 
-    public static void populate() throws IOException {
+    private static void populate() throws IOException {
         //  1. Get all RawPRRecords
         List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();

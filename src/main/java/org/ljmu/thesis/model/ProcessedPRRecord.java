@@ -203,6 +203,17 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.crSmellReviewBuddies = crSmellReviewBuddies;
     }
 
+    public int getCrSmellsCount() {
+        int count = 0;
+        count += crSmellLackOfCR == true ? 1 : 0;
+        count += crSmellPingPong == true ? 1 : 0;
+        count += crSmellSleepingReviews == true ? 1 : 0;
+        count += crSmellMissingContext == true ? 1 : 0;
+        count += crSmellLargeChangesets == true ? 1 : 0;
+        count += crSmellReviewBuddies == true ? 1 : 0;
+        return count;
+    }
+
     public int getCodeSmellsDifferenceCount() {
         return codeSmellsDifferenceCount;
     }
@@ -228,7 +239,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId,
                 String.valueOf(atLeastOneUpdatedJavaFile), createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
                 subject, message, String.valueOf(crSmellLackOfCR), String.valueOf(crSmellPingPong), String.valueOf(crSmellSleepingReviews), String.valueOf(crSmellMissingContext),
-                String.valueOf(crSmellLargeChangesets), String.valueOf(crSmellReviewBuddies),
+                String.valueOf(crSmellLargeChangesets), String.valueOf(crSmellReviewBuddies), String.valueOf(getCrSmellsCount()),
                 getStringOutput(codeSmellsDifferenceCount), getStringOutput(codeSmellsIncreased)};
         return records;
     }

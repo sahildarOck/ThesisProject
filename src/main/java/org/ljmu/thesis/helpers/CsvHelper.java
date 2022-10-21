@@ -15,7 +15,7 @@ public class CsvHelper {
 
     private static final String[] OUTPUT_HEADERS = {"revision_num", "change_id", "url", "iteration_count", "before_commit_id", "after_commit_id", "at_least_one_updated_java_file", "T(created)", "T(merged)",
             "LOC changed", "subject", "message", "cr_smell_lack_of_cr", "cr_smell_ping_pong", "cr_smell_sleeping_reviews", "cr_smell_missing_context",
-            "cr_smell_large_changesets", "cr_smell_review_buddies", "code_smells_difference_count", "code_smells_increased"};
+            "cr_smell_large_changesets", "cr_smell_review_buddies", "cr_smells_count", "code_smells_difference_count", "code_smells_increased"};
 
     public static List<RawPRRecord> getMergedRawPRRecords() throws IOException {
         CsvReader csvReader = new CsvReader(PathHelper.getMetaDataCsvPath());
