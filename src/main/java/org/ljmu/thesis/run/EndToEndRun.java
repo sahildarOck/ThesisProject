@@ -143,7 +143,7 @@ public class EndToEndRun {
                     }
                 } else {
                     totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell++;
-                    if (pr.getCodeSmellsIncreased()) {
+                    if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
                         totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell++;
                     }
                 }
