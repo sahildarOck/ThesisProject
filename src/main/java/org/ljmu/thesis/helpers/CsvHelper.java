@@ -18,7 +18,7 @@ public class CsvHelper {
             "cr_smell_large_changesets", "cr_smell_review_buddies", "cr_smells_count", "code_smells_difference_count", "code_smells_increased"};
 
     public static List<RawPRRecord> getMergedRawPRRecords() throws IOException {
-        CsvReader csvReader = new CsvReader(PathHelper.getMetaDataCsvPath());
+        CsvReader csvReader = new CsvReader(ConfigHelper.getMetaDataCsvPath());
         List<CSVRecord> records = csvReader.getCsvRecords();
 
         return records.parallelStream()
@@ -28,7 +28,7 @@ public class CsvHelper {
 
     public static void writeOutputCsv(List<ProcessedPRRecord> processedPRRecords) throws IOException {
         List<String[]> recordsAsString = processedPRRecords.parallelStream().map(r -> r.getRecords()).collect(Collectors.toList());
-        new CsvWriter().write(PathHelper.getOutputFilePath() + "testOutputFile.csv", OUTPUT_HEADERS, recordsAsString);
+        new CsvWriter().write(ConfigHelper.getOutputDirectoryPath() + "output_" + ConfigHelper.getProjectToRun() + ".csv", OUTPUT_HEADERS, recordsAsString);
     }
 
     private static RawPRRecord transformCsvRecord(CSVRecord record) {

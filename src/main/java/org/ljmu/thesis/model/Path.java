@@ -6,5 +6,5 @@ public class Path {
     public String gitRepos;
     public String metadata;
     public String codeSmellRules;
-    public String outputCsvFile;
+    public String outputDirectory;
 }

@@ -214,6 +214,10 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         return count;
     }
 
+    public boolean hasAtLeastOneCRSmell() {
+        return crSmellLackOfCR || crSmellPingPong || crSmellSleepingReviews || crSmellMissingContext || crSmellLargeChangesets || crSmellReviewBuddies;
+    }
+
     public int getCodeSmellsDifferenceCount() {
         return codeSmellsDifferenceCount;
     }

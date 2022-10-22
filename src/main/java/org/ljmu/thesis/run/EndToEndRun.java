@@ -2,9 +2,9 @@ package org.ljmu.thesis.run;
 
 import org.ljmu.thesis.commons.DateUtils;
 import org.ljmu.thesis.commons.Utils;
+import org.ljmu.thesis.helpers.ConfigHelper;
 import org.ljmu.thesis.helpers.CsvHelper;
 import org.ljmu.thesis.helpers.JsonHelper;
-import org.ljmu.thesis.helpers.PathHelper;
 import org.ljmu.thesis.helpers.codesmells.GitHelper;
 import org.ljmu.thesis.helpers.codesmells.PmdHelper;
 import org.ljmu.thesis.helpers.crsmells.GerritApiHelper;
@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -42,7 +43,9 @@ public class EndToEndRun {
 
     public static void main(String[] args) throws IOException {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "60");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "40");
+            FileHandler fh = new FileHandler(ConfigHelper.getOutputDirectoryPath() + "output_" + ConfigHelper.getProjectToRun() + ".log");
+            LOGGER.addHandler(fh);
             long start = System.currentTimeMillis();
             populate();
             long end = System.currentTimeMillis();
@@ -56,7 +59,7 @@ public class EndToEndRun {
 
     private static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 5);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
@@ -124,12 +127,60 @@ public class EndToEndRun {
 
 //        computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
 
+
+        int totalPRsWithAtLeastOneJavaUpdatedFile = 0;
+        int totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell = 0;
+        int totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell = 0;
+        int totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell = 0;
+        int totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmellAndIncreasedCodeSmell = 0;
+        for (ProcessedPRRecord pr : processedPRRecords) {
+            if (pr.hasAtLeastOneUpdatedJavaFile()) {
+                totalPRsWithAtLeastOneJavaUpdatedFile++;
+                if (pr.hasAtLeastOneCRSmell()) {
+                    totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell++;
+                    if (pr.getCodeSmellsIncreased()) {
+                        totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmellAndIncreasedCodeSmell++;
+                    }
+                } else {
+                    totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell++;
+                    if (pr.getCodeSmellsIncreased()) {
+                        totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell++;
+                    }
+                }
+            }
+        }
+
+        // Project name:
+        LOGGER.info(String.format("Project name: %s", ConfigHelper.getProjectToRun()));
+
+        // Total PRs with Java file updates:
+        LOGGER.info(String.format("Total PRs: %d", totalPRsWithAtLeastOneJavaUpdatedFile));
+
+        // Total PRs with Java file updates having no CR Smell:
+        LOGGER.info(String.format("Total PRs with no CR smell: %d", totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell));
+
+        // Total PRs with Java file updates having no CR Smell and Code Smell increased:
+        LOGGER.info(String.format("Total PRs with no CR smell and increased code smells: %d", totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell));
+
+        // % PRs with Java file updates having no CR Smell and Code Smell increased:
+        LOGGER.info(String.format("Percentage of PRs with no CR smell and increased code smells: %.2f", totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell == 0 ? 0.0f : (((float) totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell / totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell) * 100)));
+
+
+        // Total PRs with Java file updates having at least 1 CR Smell:
+        LOGGER.info(String.format("Total PRs with at least 1 CR smell: %d", totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell));
+
+        // Total PRs with Java file updates having at least 1 CR Smell and Code Smell increased:
+        LOGGER.info(String.format("Total PRs with at least 1 CR smell and increased code smells: %d", totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmellAndIncreasedCodeSmell));
+
+        // % PRs with Java file updates having at least 1 CR Smell and Code Smell increased:
+        LOGGER.info(String.format("Percentage of PRs with at least 1 CR smell and increased code smells: %.2f", totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell == 0 ? 0.0f : (((float) totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmellAndIncreasedCodeSmell / totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell) * 100)));
+
         CsvHelper.writeOutputCsv(processedPRRecords);
     }
 
     private static void cleanUp() throws IOException {
         // git worktree prune
-        GitHelper.pruneWorktree(PathHelper.getGitReposProjectPath());
+        GitHelper.pruneWorktree(ConfigHelper.getGitReposProjectPath());
     }
 
     private static void populateExistingFieldsInProcessedPRRecordsFromRawPRRecords(List<RawPRRecord> rawPRRecords, List<ProcessedPRRecord> processedPRRecords) {
@@ -240,7 +291,7 @@ public class EndToEndRun {
     }
 
     private static int getCodeSmellsCount(String commitId, String workTreeName, List<String> filePaths, int reviewNumber, int iterationCount) throws IOException {
-        String gitReposProjectPath = PathHelper.getGitReposProjectPath();
+        String gitReposProjectPath = ConfigHelper.getGitReposProjectPath();
         long startTime = System.currentTimeMillis(); // TODO: Remove
         String createWorktreeProcessOutput = GitHelper.createNewWorkTree(gitReposProjectPath, workTreeName, commitId);
         long endTime = System.currentTimeMillis(); // TODO: Remove
