@@ -1,7 +1,7 @@
 package org.ljmu.thesis.run;
 
+import org.ljmu.thesis.helpers.ConfigHelper;
 import org.ljmu.thesis.helpers.JsonHelper;
-import org.ljmu.thesis.helpers.PathHelper;
 import org.ljmu.thesis.helpers.codesmells.GitHelper;
 import org.ljmu.thesis.helpers.codesmells.PmdHelper;
 import org.ljmu.thesis.model.codesmells.PmdReport;
@@ -36,7 +36,7 @@ public class Debug {
     }
 
     public static void initProperties() throws IOException {
-        projectPath = PathHelper.getGitReposProjectPath();
+        projectPath = ConfigHelper.getGitReposProjectPath();
     }
 
     private static int getSmellsCount(String commitId, String filePath, String workTreeName) throws IOException {
