@@ -323,20 +323,18 @@ public class EndToEndRun {
 
         // Logging remove worktree process output, if issues
         startTime = System.currentTimeMillis(); // TODO: Remove
-        List<String> removeWorkTreeProcessOutputs = GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
+        String removeWorkTreeProcessOutputs = GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
         endTime = System.currentTimeMillis(); // TODO: Remove
         LOGGER.info(String.format("[%d] Remove Worktree took: [%d] seconds", reviewNumber, TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
-        removeWorkTreeProcessOutputs.forEach(o -> {
-            if (shouldOutputListBeIgnored(o, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
-                return;
-            }
-            LOGGER.log(Level.SEVERE, o);
-        });
+        if (!shouldOutputBeIgnored(removeWorkTreeProcessOutputs, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
+            LOGGER.log(Level.SEVERE, removeWorkTreeProcessOutputs);
+        }
+
 
         return codeSmellsCount;
     }
 
-    private static boolean shouldOutputListBeIgnored(String output, List<String> ignoredOutputList) {
+    private static boolean shouldOutputBeIgnored(String output, List<String> ignoredOutputList) {
         for (String ignoreOutputRegex : ignoredOutputList) {
             if (shouldOutputBeIgnored(output, ignoreOutputRegex)) {
                 return true;

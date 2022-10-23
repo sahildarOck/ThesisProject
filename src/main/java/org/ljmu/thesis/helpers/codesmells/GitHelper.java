@@ -1,7 +1,9 @@
 package org.ljmu.thesis.helpers.codesmells;
 
+import org.apache.commons.io.FileUtils;
+
+import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -16,11 +18,11 @@ public class GitHelper {
         return ProcessBuilderHelper.startProcessAndGetOutput(projectPath, command);
     }
 
-    public static List<String> removeWorkTree(String projectPath, String worktreeName) throws IOException {
-        List<List<String>> commands = new ArrayList<>();
-        commands.add(Arrays.asList("git", "worktree", "remove", "-f", "-f", worktreeName));
-        commands.add(Arrays.asList("rm", "-r", "||", "true", worktreeName));
-        return ProcessBuilderHelper.startProcessesAndGetOutput(projectPath, commands);
+    public static String removeWorkTree(String projectPath, String worktreeName) throws IOException {
+        List<String> command = Arrays.asList("git", "worktree", "remove", "-f", "-f", worktreeName);
+        String workTreeRemoveOutput = ProcessBuilderHelper.startProcessAndGetOutput(projectPath, command);
+        FileUtils.deleteQuietly(new File(projectPath + File.separator + worktreeName));
+        return workTreeRemoveOutput;
     }
 
     public static String pruneWorktree(String projectPath) throws IOException {
