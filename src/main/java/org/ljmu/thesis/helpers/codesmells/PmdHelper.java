@@ -17,8 +17,12 @@ public class PmdHelper {
     }
 
     private static List<String> getPmdCommands(String projectPath, String filePath) throws IOException {
-        String pmdFileToRun = Utils.isMacOS() ? PMD_RUN_MAC_FILE : PMD_RUN_WIN_FILE;
-        return Arrays.asList("." + File.separator + pmdFileToRun, "pmd", "--no-cache", "-d", projectPath + File.separator + filePath,
-                "-f", "json", "-R", ConfigHelper.getCodeSmellRulesFilePath());
+        if (Utils.isMacOS()) {
+            return Arrays.asList("." + File.separator + PMD_RUN_MAC_FILE, "pmd", "--no-cache", "-d", projectPath + File.separator + filePath,
+                    "-f", "json", "-R", ConfigHelper.getCodeSmellRulesFilePath());
+        } else {
+            return Arrays.asList("." + File.separator + PMD_RUN_WIN_FILE, "--no-cache", "-d", projectPath + File.separator + filePath,
+                    "-f", "json", "-R", ConfigHelper.getCodeSmellRulesFilePath());
+        }
     }
 }
