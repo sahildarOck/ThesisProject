@@ -50,8 +50,6 @@ public class EndToEndRun {
             populate();
             long end = System.currentTimeMillis();
             LOGGER.info(String.format("Time taken to finish: [%d] seconds", TimeUnit.MILLISECONDS.toSeconds(end - start)));
-        } catch (Exception e) {
-            e.printStackTrace();
         } finally {
             cleanUp();
         }
