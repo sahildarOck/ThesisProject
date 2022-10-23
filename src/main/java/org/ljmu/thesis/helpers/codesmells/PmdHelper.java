@@ -21,7 +21,7 @@ public class PmdHelper {
             return Arrays.asList("." + File.separator + PMD_RUN_MAC_FILE, "pmd", "--no-cache", "-d", projectPath + File.separator + filePath,
                     "-f", "json", "-R", ConfigHelper.getCodeSmellRulesFilePath());
         } else {
-            return Arrays.asList("." + File.separator + PMD_RUN_WIN_FILE, "--no-cache", "-d", projectPath + File.separator + filePath,
+            return Arrays.asList(PMD_RUN_WIN_FILE, "--no-cache", "-d", projectPath + File.separator + filePath,
                     "-f", "json", "-R", ConfigHelper.getCodeSmellRulesFilePath());
         }
     }
