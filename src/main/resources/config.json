@@ -4,10 +4,10 @@
   "path": {
     "pmdBin": "/Users/srivastavas/Downloads/M.Sc./pmd-bin-6.50.0/bin",
     "cropDataset": "/Users/srivastavas/Downloads/M.Sc./datasets/CROP_dataset",
-    "gitRepos": "/git_repos",
-    "metadata": "/metadata",
-    "codeSmellRules": "src/main/resources/CodeSmellRules.xml",
-    "outputDirectory": "output/"
+    "gitRepos": "git_repos",
+    "metadata": "metadata",
+    "codeSmellRules": "CodeSmellRules.xml",
+    "outputDirectory": "output"
   },
   "projects": [
     "couchbase-java-client",

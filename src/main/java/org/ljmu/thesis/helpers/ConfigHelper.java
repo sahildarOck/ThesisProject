@@ -11,17 +11,17 @@ import static org.ljmu.thesis.commons.RuntimeConfig.getConfig;
 public class ConfigHelper {
     public static String getGitReposProjectPath() throws IOException {
         Config config = getConfig();
-        return config.path.cropDataset + config.path.gitRepos + File.separator + config.projectToRun;
+        return config.path.cropDataset + File.separator + config.path.gitRepos + File.separator + config.projectToRun;
     }
 
     public static String getMetaDataCsvPath() throws IOException {
         Config config = getConfig();
-        return config.path.cropDataset + config.path.metadata + File.separator + config.projectToRun + ".csv";
+        return config.path.cropDataset + File.separator + config.path.metadata + File.separator + config.projectToRun + ".csv";
     }
 
     public static String getCodeSmellRulesFilePath() throws IOException {
         Config config = getConfig();
-        return Paths.get(config.path.codeSmellRules).toAbsolutePath().toString();
+        return Paths.get("src", "main", "resources", config.path.codeSmellRules).toAbsolutePath().toString();
     }
 
     public static String getPmdBinPath() throws IOException {
@@ -31,7 +31,7 @@ public class ConfigHelper {
 
     public static String getOutputDirectoryPath() throws IOException {
         Config config = getConfig();
-        return config.path.outputDirectory;
+        return config.path.outputDirectory + File.separator;
     }
 
     public static String getProjectToRun() throws IOException {
