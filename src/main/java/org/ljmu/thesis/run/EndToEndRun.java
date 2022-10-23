@@ -313,7 +313,7 @@ public class EndToEndRun {
                 PmdReport report = JsonHelper.getObject(outputJson, PmdReport.class);
                 return Arrays.stream(report.files).map(file -> file.violations.length).reduce(0, (len1, len2) -> len1 + len2);
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, String.format("Failure occurred for commit id: [%d]. Details below: ", commitId));
+                LOGGER.log(Level.SEVERE, String.format("Failure occurred for commit id: [%s]. Details below: ", commitId));
                 e.printStackTrace();
                 return 0;
             }
