@@ -107,9 +107,9 @@ public class EndToEndRun {
                 prUpdated.setMessage(changeRevisionCommitOutput.getMessage().trim());
 
                 // Compute and populate the Code smells difference count
-                Integer codeSmellsDifferenceCount = getNumberOfNewCodeSmells(prUpdated);
-                prUpdated.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
-                prUpdated.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
+//                Integer codeSmellsDifferenceCount = getNumberOfNewCodeSmells(prUpdated);
+//                prUpdated.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
+//                prUpdated.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
 
                 LOGGER.info(String.format("Object updated after Gerrit calls and code smells computation for review number: [%d]", pr.getReviewNumber()));
 
@@ -124,7 +124,7 @@ public class EndToEndRun {
 
         computeAndPopulateCRSmellsInProcessedPRRecords(processedPRRecords, ownerReviewersReviewCountMap, ownerPRCountMap);
 
-//        computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
+        computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
 
         int totalPRsWithAtLeastOneJavaUpdatedFile = 0;
         int totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell = 0;
