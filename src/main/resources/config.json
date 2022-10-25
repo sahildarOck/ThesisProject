@@ -1,6 +1,6 @@
 {
   "_readMe": "Please update the fields: 'projectToRun' for the project to be run, 'path.pmdBin' for the pmd bin path and 'path.cropDataset' for the path of the CROP_dataset",
-  "projectToRun": "eclipse.platform.ui",
+  "projectToRun": "egit",
   "path": {
     "pmdBin": "/Users/srivastavas/Downloads/M.Sc./pmd-bin-6.50.0/bin",
     "cropDataset": "/Users/srivastavas/Downloads/M.Sc./datasets/CROP_dataset",

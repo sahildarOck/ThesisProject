@@ -57,7 +57,7 @@ public class EndToEndRun {
 
     private static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 3);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
@@ -106,7 +106,7 @@ public class EndToEndRun {
                 prUpdated.setMessage(changeRevisionCommitOutput.getMessage().trim());
 
                 // Compute and populate the Code smells difference count
-                Integer codeSmellsDifferenceCount = getCodeSmellsDifferenceCount(prUpdated);
+                Integer codeSmellsDifferenceCount = getNumberOfNewCodeSmells(prUpdated);
                 prUpdated.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
                 prUpdated.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
 
@@ -177,6 +177,8 @@ public class EndToEndRun {
     }
 
     private static void cleanUp() throws IOException {
+        // TODO: Delete all files
+
         // git worktree prune
         GitHelper.pruneWorktree(ConfigHelper.getGitReposProjectPath());
     }
@@ -277,61 +279,80 @@ public class EndToEndRun {
         if (!prRecord.hasAtLeastOneUpdatedJavaFile()) {
             return null;
         }
-        String afterCommitId = prRecord.getAfterCommitId();
-        String beforeCommitId = prRecord.getBeforeCommitId();
-        List<String> filePaths = prRecord.getUpdatedFilesList();
-        int afterReviewCodeSmellsCount = getCodeSmellsCount(afterCommitId, "afterWorkTree_" + afterCommitId, filePaths, prRecord.getReviewNumber(), prRecord.getIterationCount());
-        int beforeReviewCodeSmellsCount = getCodeSmellsCount(prRecord.getBeforeCommitId(), "beforeWorkTree_" + beforeCommitId, filePaths, prRecord.getReviewNumber(), prRecord.getIterationCount());
-
-        LOGGER.info(String.format("beforeReviewCodeSmellsCount: [%d], afterReviewCodeSmellsCount: [%d] for review number: [%d]", beforeReviewCodeSmellsCount, afterReviewCodeSmellsCount, prRecord.getReviewNumber()));
-
-        return afterReviewCodeSmellsCount - beforeReviewCodeSmellsCount;
+        return getNumberOfNewCodeSmells(prRecord);
     }
 
-    private static int getCodeSmellsCount(String commitId, String workTreeName, List<String> filePaths, int reviewNumber, int iterationCount) throws IOException {
-        String gitReposProjectPath = ConfigHelper.getGitReposProjectPath();
-        long startTime = System.currentTimeMillis(); // TODO: Remove
-        String createWorktreeProcessOutput = GitHelper.createNewWorkTree(gitReposProjectPath, workTreeName, commitId);
-        long endTime = System.currentTimeMillis(); // TODO: Remove
-        LOGGER.info(String.format("[%d] Create Worktree took: [%d] seconds", reviewNumber, TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
-
-
-        // Logging create worktree process output, if issues
-        if (!isGitWorktreeCreationSuccessful(workTreeName.contains("before") ? true : false, reviewNumber, iterationCount, createWorktreeProcessOutput)) {
-            LOGGER.info(String.format("Git createWorktreeProcessOutput: %s", createWorktreeProcessOutput));
+    private static Integer getNumberOfNewCodeSmells(ProcessedPRRecord prRecord) throws IOException {
+        // return null if no java updated file
+        if (!prRecord.hasAtLeastOneUpdatedJavaFile()) {
+            return null;
         }
 
-        // Computing code smells
+        // Create new worktree with afterCommitId
+        String gitReposProjectPath = ConfigHelper.getGitReposProjectPath();
+        String workTreeName = "worktree_" + prRecord.getReviewNumber();
+        long startTime = System.currentTimeMillis(); // TODO: Remove
+        String gitCreateWorktreeProcessOutput = GitHelper.createNewWorkTree(gitReposProjectPath, workTreeName, prRecord.getAfterCommitId());
+        long endTime = System.currentTimeMillis(); // TODO: Remove
+        // Log if issues
+        if (!isGitWorktreeCreationSuccessful(false, prRecord.getReviewNumber(), prRecord.getIterationCount(), gitCreateWorktreeProcessOutput)) {
+            LOGGER.log(Level.SEVERE, String.format("gitCreateWorktreeProcessOutput: %s", gitCreateWorktreeProcessOutput));
+            throw new RuntimeException("Git worktree creation process failed...!!!");
+        }
+        LOGGER.info(String.format("[%d] Create Worktree took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
+
+        // Computing code smells for afterCommitId
         startTime = System.currentTimeMillis(); // TODO: Remove
         String workTreeProjectPath = gitReposProjectPath + File.separator + workTreeName;
-        int codeSmellsCount = filePaths.parallelStream().map(p -> {
+        int afterCommitCodeSmellsCount = getCodeSmellsCount(workTreeProjectPath, prRecord.getUpdatedFilesList());
+        endTime = System.currentTimeMillis(); // TODO: Remove
+        LOGGER.info(String.format("[%d] Computing code smells took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
+
+        // Git checkout beforeCommitId
+        startTime = System.currentTimeMillis(); // TODO: Remove
+        String gitCheckoutProcessOutput = GitHelper.checkout(workTreeProjectPath, prRecord.getBeforeCommitId());
+        endTime = System.currentTimeMillis(); // TODO: Remove
+        // Log if issues
+        if (!isGitCheckoutSuccessful(gitCheckoutProcessOutput)) {
+            throw new RuntimeException(String.format("Git checkout process failed for commitId:[%s], with checkoutProcessOutput...!!!: %s", prRecord.getBeforeCommitId(), gitCheckoutProcessOutput));
+        }
+        LOGGER.info(String.format("[%d] Git checkout took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
+
+        // Compute code smells for beforeCommitId
+        startTime = System.currentTimeMillis(); // TODO: Remove
+        int beforeCommitCodeSmellsCount = getCodeSmellsCount(workTreeProjectPath, prRecord.getUpdatedFilesList());
+        endTime = System.currentTimeMillis(); // TODO: Remove
+        LOGGER.info(String.format("[%d] Computing code smells took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
+
+        LOGGER.info(String.format("beforeReviewCodeSmellsCount: [%d], afterReviewCodeSmellsCount: [%d] for review number: [%d]", beforeCommitCodeSmellsCount, afterCommitCodeSmellsCount, prRecord.getReviewNumber()));
+
+        // Logging remove worktree process output, if issues
+        startTime = System.currentTimeMillis(); // TODO: Remove
+        String removeWorkTreeProcessOutputs = GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
+        endTime = System.currentTimeMillis(); // TODO: Remove
+        LOGGER.info(String.format("[%d] Remove Worktree took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
+        if (!shouldOutputBeIgnored(removeWorkTreeProcessOutputs, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
+            LOGGER.log(Level.SEVERE, removeWorkTreeProcessOutputs);
+        }
+
+        return afterCommitCodeSmellsCount - beforeCommitCodeSmellsCount;
+    }
+
+    private static int getCodeSmellsCount(String projectPath, List<String> updatedFileList) {
+        return updatedFileList.parallelStream().map(fp -> {
             try {
-                String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(workTreeProjectPath, p);
+                String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(projectPath, fp);
                 if (outputJson.contains("No such file")) {
                     return 0;
                 }
                 PmdReport report = JsonHelper.getObject(outputJson, PmdReport.class);
                 return Arrays.stream(report.files).map(file -> file.violations.length).reduce(0, (len1, len2) -> len1 + len2);
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, String.format("Failure occurred for commit id: [%s]. Details below: ", commitId));
+                LOGGER.log(Level.SEVERE, String.format("Failure occurred while running PMD for projectpath: [%s]. Details below: ", projectPath));
                 e.printStackTrace();
                 return 0;
             }
         }).reduce(0, (count1, count2) -> count1 + count2);
-        endTime = System.currentTimeMillis(); // TODO: Remove
-        LOGGER.info(String.format("[%d] Computing code smells took: [%d] seconds", reviewNumber, TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
-
-        // Logging remove worktree process output, if issues
-        startTime = System.currentTimeMillis(); // TODO: Remove
-        String removeWorkTreeProcessOutputs = GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
-        endTime = System.currentTimeMillis(); // TODO: Remove
-        LOGGER.info(String.format("[%d] Remove Worktree took: [%d] seconds", reviewNumber, TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
-        if (!shouldOutputBeIgnored(removeWorkTreeProcessOutputs, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
-            LOGGER.log(Level.SEVERE, removeWorkTreeProcessOutputs);
-        }
-
-
-        return codeSmellsCount;
     }
 
     private static boolean shouldOutputBeIgnored(String output, List<String> ignoredOutputList) {
@@ -351,8 +372,12 @@ public class EndToEndRun {
         return false;
     }
 
-    private static boolean isGitWorktreeCreationSuccessful(boolean isBefore, int reviewNumber, int iterationCount, String gitCheckoutOutput) {
+    private static boolean isGitWorktreeCreationSuccessful(boolean isBefore, int reviewNumber, int iterationCount, String processOutput) {
         String partialSuccessString = String.format("First commited as %s_%d_rev%d", isBefore ? "before" : "after", reviewNumber, isBefore ? 1 : iterationCount);
-        return gitCheckoutOutput.contains(partialSuccessString);
+        return processOutput.contains(partialSuccessString);
+    }
+
+    private static boolean isGitCheckoutSuccessful(String processOutput) {
+        return !processOutput.contains("fatal") && !processOutput.contains("fail") && !processOutput.contains("error");
     }
 }

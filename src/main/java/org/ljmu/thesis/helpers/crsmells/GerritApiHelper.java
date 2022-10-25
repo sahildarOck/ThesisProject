@@ -22,3 +22,7 @@ public class GerritApiHelper {
         return ApiHelper.get(uri);
     }
 }
+
+// https://review.couchbase.org/c/spymemcached
+// https://git.eclipse.org/r - eclipse / jgit / egit
+// http://review.couchbase.org - couchbase jvm core / java client
