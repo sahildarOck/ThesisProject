@@ -5,7 +5,7 @@ import org.ljmu.thesis.commons.CsvReader;
 import org.ljmu.thesis.commons.CsvWriter;
 import org.ljmu.thesis.enums.Status;
 import org.ljmu.thesis.model.ProcessedPRRecord;
-import org.ljmu.thesis.model.crsmells.RawPRRecord;
+import org.ljmu.thesis.model.RawPRRecord;
 
 import java.io.IOException;
 import java.util.List;

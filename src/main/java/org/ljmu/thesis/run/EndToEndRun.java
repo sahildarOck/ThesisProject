@@ -5,15 +5,15 @@ import org.ljmu.thesis.commons.Utils;
 import org.ljmu.thesis.helpers.ConfigHelper;
 import org.ljmu.thesis.helpers.CsvHelper;
 import org.ljmu.thesis.helpers.JsonHelper;
-import org.ljmu.thesis.helpers.codesmells.GitHelper;
-import org.ljmu.thesis.helpers.codesmells.PmdHelper;
-import org.ljmu.thesis.helpers.crsmells.GerritApiHelper;
+import org.ljmu.thesis.helpers.GitHelper;
+import org.ljmu.thesis.helpers.PmdHelper;
+import org.ljmu.thesis.helpers.GerritApiHelper;
 import org.ljmu.thesis.model.ProcessedPRRecord;
-import org.ljmu.thesis.model.codesmells.PmdReport;
-import org.ljmu.thesis.model.crsmells.Developer;
-import org.ljmu.thesis.model.crsmells.GetChangeDetailOutput;
-import org.ljmu.thesis.model.crsmells.GetChangeRevisionCommitOutput;
-import org.ljmu.thesis.model.crsmells.RawPRRecord;
+import org.ljmu.thesis.model.PmdReport;
+import org.ljmu.thesis.model.Developer;
+import org.ljmu.thesis.model.GetChangeDetailOutput;
+import org.ljmu.thesis.model.GetChangeRevisionCommitOutput;
+import org.ljmu.thesis.model.RawPRRecord;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,8 +25,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static org.ljmu.thesis.helpers.GitHelper.*;
 
 public class EndToEndRun {
     private static final Logger LOGGER = Logger.getLogger(EndToEndRun.class.getName());
@@ -124,7 +125,6 @@ public class EndToEndRun {
         computeAndPopulateCRSmellsInProcessedPRRecords(processedPRRecords, ownerReviewersReviewCountMap, ownerPRCountMap);
 
 //        computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
-
 
         int totalPRsWithAtLeastOneJavaUpdatedFile = 0;
         int totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell = 0;
@@ -233,9 +233,9 @@ public class EndToEndRun {
             // Compute and populate the Code smells difference count
             Integer codeSmellsDifferenceCount = null;
             try {
-                codeSmellsDifferenceCount = getCodeSmellsDifferenceCount(pr);
+                codeSmellsDifferenceCount = getNumberOfNewCodeSmells(pr);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
             pr.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
             pr.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
@@ -273,13 +273,6 @@ public class EndToEndRun {
         }
         String filteredMessage = message.split("[\n]*Change-Id")[0];
         return subject.equals(filteredMessage);
-    }
-
-    private static Integer getCodeSmellsDifferenceCount(ProcessedPRRecord prRecord) throws IOException {
-        if (!prRecord.hasAtLeastOneUpdatedJavaFile()) {
-            return null;
-        }
-        return getNumberOfNewCodeSmells(prRecord);
     }
 
     private static Integer getNumberOfNewCodeSmells(ProcessedPRRecord prRecord) throws IOException {
@@ -331,7 +324,7 @@ public class EndToEndRun {
         String removeWorkTreeProcessOutputs = GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
         endTime = System.currentTimeMillis(); // TODO: Remove
         LOGGER.info(String.format("[%d] Remove Worktree took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
-        if (!shouldOutputBeIgnored(removeWorkTreeProcessOutputs, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
+        if (!isGitRemoveWorktreeSuccessful(removeWorkTreeProcessOutputs, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
             LOGGER.log(Level.SEVERE, removeWorkTreeProcessOutputs);
         }
 
@@ -353,31 +346,5 @@ public class EndToEndRun {
                 return 0;
             }
         }).reduce(0, (count1, count2) -> count1 + count2);
-    }
-
-    private static boolean shouldOutputBeIgnored(String output, List<String> ignoredOutputList) {
-        for (String ignoreOutputRegex : ignoredOutputList) {
-            if (shouldOutputBeIgnored(output, ignoreOutputRegex)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean shouldOutputBeIgnored(String output, String ignoreOutputRegex) {
-        Pattern pattern = Pattern.compile(ignoreOutputRegex);
-        if (output.isEmpty() || pattern.matcher(output).matches()) {
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean isGitWorktreeCreationSuccessful(boolean isBefore, int reviewNumber, int iterationCount, String processOutput) {
-        String partialSuccessString = String.format("First commited as %s_%d_rev%d", isBefore ? "before" : "after", reviewNumber, isBefore ? 1 : iterationCount);
-        return processOutput.contains(partialSuccessString);
-    }
-
-    private static boolean isGitCheckoutSuccessful(String processOutput) {
-        return !processOutput.contains("fatal") && !processOutput.contains("fail") && !processOutput.contains("error");
     }
 }

@@ -1,8 +1,7 @@
-package org.ljmu.thesis.model.codesmells;
+package org.ljmu.thesis.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PmdFile {
-    public PmdViolation[] violations;
+public class PmdViolation {
 }

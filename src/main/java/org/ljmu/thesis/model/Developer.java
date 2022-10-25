@@ -1,4 +1,4 @@
-package org.ljmu.thesis.model.crsmells;
+package org.ljmu.thesis.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

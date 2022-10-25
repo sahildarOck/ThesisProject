@@ -1,7 +1,6 @@
-package org.ljmu.thesis.helpers.codesmells;
+package org.ljmu.thesis.helpers;
 
 import org.ljmu.thesis.commons.Utils;
-import org.ljmu.thesis.helpers.ConfigHelper;
 
 import java.io.File;
 import java.io.IOException;
