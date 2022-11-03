@@ -1,4 +1,4 @@
-package org.ljmu.thesis.model;
+package org.ljmu.thesis.model.gerrit;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

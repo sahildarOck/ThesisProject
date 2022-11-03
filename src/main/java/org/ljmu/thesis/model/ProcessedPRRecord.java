@@ -155,7 +155,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.message = message;
     }
 
-    public boolean isCrSmellLackOfCR() {
+    public boolean hasCrSmellLackOfCR() {
         return crSmellLackOfCR;
     }
 
@@ -163,7 +163,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.crSmellLackOfCR = crSmellLackOfCR;
     }
 
-    public boolean isCrSmellPingPong() {
+    public boolean hasCrSmellPingPong() {
         return crSmellPingPong;
     }
 
@@ -171,7 +171,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.crSmellPingPong = crSmellPingPong;
     }
 
-    public boolean isCrSmellSleepingReviews() {
+    public boolean hasCrSmellSleepingReviews() {
         return crSmellSleepingReviews;
     }
 
@@ -179,7 +179,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.crSmellSleepingReviews = crSmellSleepingReviews;
     }
 
-    public boolean isCrSmellMissingContext() {
+    public boolean hasCrSmellMissingContext() {
         return crSmellMissingContext;
     }
 
@@ -187,7 +187,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.crSmellMissingContext = crSmellMissingContext;
     }
 
-    public boolean isCrSmellLargeChangesets() {
+    public boolean hasCrSmellLargeChangesets() {
         return crSmellLargeChangesets;
     }
 
@@ -195,7 +195,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.crSmellLargeChangesets = crSmellLargeChangesets;
     }
 
-    public boolean isCrSmellReviewBuddies() {
+    public boolean hasCrSmellReviewBuddies() {
         return crSmellReviewBuddies;
     }
 

@@ -11,8 +11,8 @@ import org.ljmu.thesis.helpers.GerritApiHelper;
 import org.ljmu.thesis.model.ProcessedPRRecord;
 import org.ljmu.thesis.model.PmdReport;
 import org.ljmu.thesis.model.Developer;
-import org.ljmu.thesis.model.GetChangeDetailOutput;
-import org.ljmu.thesis.model.GetChangeRevisionCommitOutput;
+import org.ljmu.thesis.model.gerrit.GetChangeDetailOutput;
+import org.ljmu.thesis.model.gerrit.GetChangeRevisionCommitOutput;
 import org.ljmu.thesis.model.RawPRRecord;
 
 import java.io.File;

@@ -1,6 +1,8 @@
-package org.ljmu.thesis.model;
+package org.ljmu.thesis.model.gerrit;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.ljmu.thesis.model.Developer;
+import org.ljmu.thesis.model.Reviewers;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GetChangeDetailOutput {
