@@ -34,6 +34,86 @@ public class Results {
         crSmellReviewBuddies = new IndividualCRSmellResult();
     }
 
+    public String getProjectName() {
+        return projectName;
+    }
+
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    public int getTotalPRs() {
+        return totalPRs;
+    }
+
+    public void setTotalPRs(int totalPRs) {
+        this.totalPRs = totalPRs;
+    }
+
+    public PresenceResults getPresenceResults() {
+        return presenceResults;
+    }
+
+    public void setPresenceResults(PresenceResults presenceResults) {
+        this.presenceResults = presenceResults;
+    }
+
+    public AbsenceResults getAbsenceResults() {
+        return absenceResults;
+    }
+
+    public void setAbsenceResults(AbsenceResults absenceResults) {
+        this.absenceResults = absenceResults;
+    }
+
+    public IndividualCRSmellResult getCrSmellLackOfCR() {
+        return crSmellLackOfCR;
+    }
+
+    public void setCrSmellLackOfCR(IndividualCRSmellResult crSmellLackOfCR) {
+        this.crSmellLackOfCR = crSmellLackOfCR;
+    }
+
+    public IndividualCRSmellResult getCrSmellPingPong() {
+        return crSmellPingPong;
+    }
+
+    public void setCrSmellPingPong(IndividualCRSmellResult crSmellPingPong) {
+        this.crSmellPingPong = crSmellPingPong;
+    }
+
+    public IndividualCRSmellResult getCrSmellSleepingReviews() {
+        return crSmellSleepingReviews;
+    }
+
+    public void setCrSmellSleepingReviews(IndividualCRSmellResult crSmellSleepingReviews) {
+        this.crSmellSleepingReviews = crSmellSleepingReviews;
+    }
+
+    public IndividualCRSmellResult getCrSmellMissingContext() {
+        return crSmellMissingContext;
+    }
+
+    public void setCrSmellMissingContext(IndividualCRSmellResult crSmellMissingContext) {
+        this.crSmellMissingContext = crSmellMissingContext;
+    }
+
+    public IndividualCRSmellResult getCrSmellLargeChangesets() {
+        return crSmellLargeChangesets;
+    }
+
+    public void setCrSmellLargeChangesets(IndividualCRSmellResult crSmellLargeChangesets) {
+        this.crSmellLargeChangesets = crSmellLargeChangesets;
+    }
+
+    public IndividualCRSmellResult getCrSmellReviewBuddies() {
+        return crSmellReviewBuddies;
+    }
+
+    public void setCrSmellReviewBuddies(IndividualCRSmellResult crSmellReviewBuddies) {
+        this.crSmellReviewBuddies = crSmellReviewBuddies;
+    }
+
     public static Results computeResults(List<ProcessedPRRecord> prRecords) throws IOException {
         Results results = new Results();
 
@@ -42,6 +122,7 @@ public class Results {
                 continue;
             }
             results.totalPRs++;
+
             if (pr.hasAtLeastOneCRSmell()) { // At least 1 CR Smell
                 results.presenceResults.totalPRsWithAtLeastOneCRSmell++;
                 if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) { // At least 1 CR Smell > Has Code Smells increased
@@ -126,24 +207,75 @@ public class Results {
                 }
             }
         }
-        // TODO: Compute crSmellsPresenceEffect and crSmellsAbsenceEffect for whole and individual
 
         return results;
     }
 
-    public static class PresenceResults {
+    private static class PresenceResults {
         private int totalPRsWithAtLeastOneCRSmell;
         private int totalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell;
-        private float crSmellsPresenceEffect;
+        private String crSmellsPresenceEffect;
+
+        public int getTotalPRsWithAtLeastOneCRSmell() {
+            return totalPRsWithAtLeastOneCRSmell;
+        }
+
+        public void setTotalPRsWithAtLeastOneCRSmell(int totalPRsWithAtLeastOneCRSmell) {
+            this.totalPRsWithAtLeastOneCRSmell = totalPRsWithAtLeastOneCRSmell;
+        }
+
+        public int getTotalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell() {
+            return totalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell;
+        }
+
+        public void setTotalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell(int totalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell) {
+            this.totalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell = totalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell;
+        }
+
+        public String getCrSmellsPresenceEffect() {
+            float crSmellsPresenceEffectValue = this.totalPRsWithAtLeastOneCRSmell == 0 ? 0.0f : (((float) this.totalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell / this.totalPRsWithAtLeastOneCRSmell) * 100);
+            crSmellsPresenceEffect = crSmellsPresenceEffectValue + " %";
+            return crSmellsPresenceEffect;
+        }
+
+        public void setCrSmellsPresenceEffect(String crSmellsPresenceEffect) {
+            this.crSmellsPresenceEffect = crSmellsPresenceEffect;
+        }
     }
 
-    public static class AbsenceResults {
+    private static class AbsenceResults {
         private int totalPRsWithNoCRSmell;
         private int totalPRsWithNoCRSmellAndIncreasedCodeSmell;
-        private float crSmellsAbsenceEffect;
+        private String crSmellsAbsenceEffect;
+
+        public int getTotalPRsWithNoCRSmell() {
+            return totalPRsWithNoCRSmell;
+        }
+
+        public void setTotalPRsWithNoCRSmell(int totalPRsWithNoCRSmell) {
+            this.totalPRsWithNoCRSmell = totalPRsWithNoCRSmell;
+        }
+
+        public int getTotalPRsWithNoCRSmellAndIncreasedCodeSmell() {
+            return totalPRsWithNoCRSmellAndIncreasedCodeSmell;
+        }
+
+        public void setTotalPRsWithNoCRSmellAndIncreasedCodeSmell(int totalPRsWithNoCRSmellAndIncreasedCodeSmell) {
+            this.totalPRsWithNoCRSmellAndIncreasedCodeSmell = totalPRsWithNoCRSmellAndIncreasedCodeSmell;
+        }
+
+        public String getCrSmellsAbsenceEffect() {
+            float crSmellsAbsenceEffectValue = this.totalPRsWithNoCRSmell == 0 ? 0.0f : (((float) this.totalPRsWithNoCRSmellAndIncreasedCodeSmell / this.totalPRsWithNoCRSmell) * 100);
+            crSmellsAbsenceEffect = crSmellsAbsenceEffectValue + " %";
+            return crSmellsAbsenceEffect;
+        }
+
+        public void setCrSmellsAbsenceEffect(String crSmellsAbsenceEffect) {
+            this.crSmellsAbsenceEffect = crSmellsAbsenceEffect;
+        }
     }
 
-    public static class IndividualCRSmellResult {
+    private static class IndividualCRSmellResult {
 
         private PresenceResults presenceResults;
         private AbsenceResults absenceResults;
@@ -153,16 +285,84 @@ public class Results {
             this.absenceResults = new AbsenceResults();
         }
 
+        public PresenceResults getPresenceResults() {
+            return presenceResults;
+        }
+
+        public void setPresenceResults(PresenceResults presenceResults) {
+            this.presenceResults = presenceResults;
+        }
+
+        public AbsenceResults getAbsenceResults() {
+            return absenceResults;
+        }
+
+        public void setAbsenceResults(AbsenceResults absenceResults) {
+            this.absenceResults = absenceResults;
+        }
+
         public static class PresenceResults {
             private int totalPRsWithCRSmell;
             private int totalPRsWithCRSmellAndIncreasedCodeSmell;
-            private float crSmellPresenceEffect;
+            private String crSmellPresenceEffect;
+
+            public int getTotalPRsWithCRSmell() {
+                return totalPRsWithCRSmell;
+            }
+
+            public void setTotalPRsWithCRSmell(int totalPRsWithCRSmell) {
+                this.totalPRsWithCRSmell = totalPRsWithCRSmell;
+            }
+
+            public int getTotalPRsWithCRSmellAndIncreasedCodeSmell() {
+                return totalPRsWithCRSmellAndIncreasedCodeSmell;
+            }
+
+            public void setTotalPRsWithCRSmellAndIncreasedCodeSmell(int totalPRsWithCRSmellAndIncreasedCodeSmell) {
+                this.totalPRsWithCRSmellAndIncreasedCodeSmell = totalPRsWithCRSmellAndIncreasedCodeSmell;
+            }
+
+            public String getCrSmellPresenceEffect() {
+                float crSmellPresenceEffectValue = this.totalPRsWithCRSmell == 0 ? 0.0f : (((float) this.totalPRsWithCRSmellAndIncreasedCodeSmell / this.totalPRsWithCRSmell) * 100);
+                crSmellPresenceEffect = crSmellPresenceEffectValue + " %";
+                return crSmellPresenceEffect;
+            }
+
+            public void setCrSmellPresenceEffect(String crSmellPresenceEffect) {
+                this.crSmellPresenceEffect = crSmellPresenceEffect;
+            }
         }
 
         public static class AbsenceResults {
             private int totalPRsWithNoCRSmell;
             private int totalPRsWithNoCRSmellAndIncreasedCodeSmell;
-            private float crSmellAbsenceEffect;
+            private String crSmellAbsenceEffect;
+
+            public int getTotalPRsWithNoCRSmell() {
+                return totalPRsWithNoCRSmell;
+            }
+
+            public void setTotalPRsWithNoCRSmell(int totalPRsWithNoCRSmell) {
+                this.totalPRsWithNoCRSmell = totalPRsWithNoCRSmell;
+            }
+
+            public int getTotalPRsWithNoCRSmellAndIncreasedCodeSmell() {
+                return totalPRsWithNoCRSmellAndIncreasedCodeSmell;
+            }
+
+            public void setTotalPRsWithNoCRSmellAndIncreasedCodeSmell(int totalPRsWithNoCRSmellAndIncreasedCodeSmell) {
+                this.totalPRsWithNoCRSmellAndIncreasedCodeSmell = totalPRsWithNoCRSmellAndIncreasedCodeSmell;
+            }
+
+            public String getCrSmellAbsenceEffect() {
+                float crSmellAbsenceEffectValue = this.totalPRsWithNoCRSmell == 0 ? 0.0f : (((float) this.totalPRsWithNoCRSmellAndIncreasedCodeSmell / this.totalPRsWithNoCRSmell) * 100);
+                crSmellAbsenceEffect = crSmellAbsenceEffectValue + " %";
+                return crSmellAbsenceEffect;
+            }
+
+            public void setCrSmellAbsenceEffect(String crSmellAbsenceEffect) {
+                this.crSmellAbsenceEffect = crSmellAbsenceEffect;
+            }
         }
     }
 }

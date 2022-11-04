@@ -3,6 +3,7 @@ package org.ljmu.thesis.helpers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,5 +33,11 @@ public class JsonHelper {
             fieldNames.add(iterator.next());
         }
         return fieldNames;
+    }
+
+    public static String getJsonPrettyString(Object obj) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
     }
 }

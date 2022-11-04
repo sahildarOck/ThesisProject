@@ -2,18 +2,14 @@ package org.ljmu.thesis.run;
 
 import org.ljmu.thesis.commons.DateUtils;
 import org.ljmu.thesis.commons.Utils;
-import org.ljmu.thesis.helpers.ConfigHelper;
-import org.ljmu.thesis.helpers.CsvHelper;
-import org.ljmu.thesis.helpers.JsonHelper;
-import org.ljmu.thesis.helpers.GitHelper;
-import org.ljmu.thesis.helpers.PmdHelper;
-import org.ljmu.thesis.helpers.GerritApiHelper;
-import org.ljmu.thesis.model.ProcessedPRRecord;
-import org.ljmu.thesis.model.PmdReport;
+import org.ljmu.thesis.helpers.*;
 import org.ljmu.thesis.model.Developer;
+import org.ljmu.thesis.model.PmdReport;
+import org.ljmu.thesis.model.ProcessedPRRecord;
+import org.ljmu.thesis.model.RawPRRecord;
 import org.ljmu.thesis.model.gerrit.GetChangeDetailOutput;
 import org.ljmu.thesis.model.gerrit.GetChangeRevisionCommitOutput;
-import org.ljmu.thesis.model.RawPRRecord;
+import org.ljmu.thesis.model.results.Results;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +54,7 @@ public class EndToEndRun {
 
     private static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 5);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
@@ -111,7 +107,7 @@ public class EndToEndRun {
 //                prUpdated.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
 //                prUpdated.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
 
-                LOGGER.info(String.format("Object updated after Gerrit calls and code smells computation for review number: [%d]", pr.getReviewNumber()));
+                LOGGER.info(String.format("Gerrit calls done for review number: [%d]", pr.getReviewNumber()));
 
             } catch (Exception e) {
                 if (pr != null) {
@@ -126,52 +122,9 @@ public class EndToEndRun {
 
         computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
 
-        int totalPRsWithAtLeastOneJavaUpdatedFile = 0;
-        int totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell = 0;
-        int totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell = 0;
-        int totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell = 0;
-        int totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmellAndIncreasedCodeSmell = 0;
-        for (ProcessedPRRecord pr : processedPRRecords) {
-            if (pr.hasAtLeastOneUpdatedJavaFile()) {
-                totalPRsWithAtLeastOneJavaUpdatedFile++;
-                if (pr.hasAtLeastOneCRSmell()) {
-                    totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell++;
-                    if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
-                        totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmellAndIncreasedCodeSmell++;
-                    }
-                } else {
-                    totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell++;
-                    if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
-                        totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell++;
-                    }
-                }
-            }
-        }
-
-        // Project name:
-        LOGGER.info(String.format("Project name: %s", ConfigHelper.getProjectToRun()));
-
-        // Total PRs with Java file updates:
-        LOGGER.info(String.format("Total PRs: %d", totalPRsWithAtLeastOneJavaUpdatedFile));
-
-        // Total PRs with Java file updates having no CR Smell:
-        LOGGER.info(String.format("Total PRs with no CR smell: %d", totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell));
-
-        // Total PRs with Java file updates having no CR Smell and Code Smell increased:
-        LOGGER.info(String.format("Total PRs with no CR smell and increased code smells: %d", totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell));
-
-        // % PRs with Java file updates having no CR Smell and Code Smell increased:
-        LOGGER.info(String.format("Percentage of PRs with no CR smell and increased code smells: %.2f", totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell == 0 ? 0.0f : (((float) totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmellAndIncreasedCodeSmell / totalPRsWithAtLeastOneJavaUpdatedFileAndNoCRSmell) * 100)));
-
-
-        // Total PRs with Java file updates having at least 1 CR Smell:
-        LOGGER.info(String.format("Total PRs with at least 1 CR smell: %d", totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell));
-
-        // Total PRs with Java file updates having at least 1 CR Smell and Code Smell increased:
-        LOGGER.info(String.format("Total PRs with at least 1 CR smell and increased code smells: %d", totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmellAndIncreasedCodeSmell));
-
-        // % PRs with Java file updates having at least 1 CR Smell and Code Smell increased:
-        LOGGER.info(String.format("Percentage of PRs with at least 1 CR smell and increased code smells: %.2f", totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell == 0 ? 0.0f : (((float) totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmellAndIncreasedCodeSmell / totalPRsWithAtLeastOneJavaUpdatedFileAndAtLeastOneCRSmell) * 100)));
+        String results = JsonHelper.getJsonPrettyString(Results.computeResults(processedPRRecords));
+        System.out.println(results);
+        LOGGER.info(results);
 
         CsvHelper.writeOutputCsv(processedPRRecords);
     }
