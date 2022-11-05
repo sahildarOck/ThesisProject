@@ -4,6 +4,7 @@ import org.ljmu.thesis.helpers.ConfigHelper;
 import org.ljmu.thesis.model.ProcessedPRRecord;
 
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class Results {
@@ -20,6 +21,8 @@ public class Results {
     private IndividualCRSmellResult crSmellMissingContext;
     private IndividualCRSmellResult crSmellLargeChangesets;
     private IndividualCRSmellResult crSmellReviewBuddies;
+
+    private static DecimalFormat df = new DecimalFormat("0.00");
 
     public Results() throws IOException {
         this.projectName = ConfigHelper.getProjectToRun();
@@ -234,7 +237,7 @@ public class Results {
 
         public String getCrSmellsPresenceEffect() {
             float crSmellsPresenceEffectValue = this.totalPRsWithAtLeastOneCRSmell == 0 ? 0.0f : (((float) this.totalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell / this.totalPRsWithAtLeastOneCRSmell) * 100);
-            crSmellsPresenceEffect = crSmellsPresenceEffectValue + " %";
+            crSmellsPresenceEffect = df.format(crSmellsPresenceEffectValue) + " %";
             return crSmellsPresenceEffect;
         }
 
@@ -266,7 +269,7 @@ public class Results {
 
         public String getCrSmellsAbsenceEffect() {
             float crSmellsAbsenceEffectValue = this.totalPRsWithNoCRSmell == 0 ? 0.0f : (((float) this.totalPRsWithNoCRSmellAndIncreasedCodeSmell / this.totalPRsWithNoCRSmell) * 100);
-            crSmellsAbsenceEffect = crSmellsAbsenceEffectValue + " %";
+            crSmellsAbsenceEffect = df.format(crSmellsAbsenceEffectValue) + " %";
             return crSmellsAbsenceEffect;
         }
 
@@ -324,7 +327,7 @@ public class Results {
 
             public String getCrSmellPresenceEffect() {
                 float crSmellPresenceEffectValue = this.totalPRsWithCRSmell == 0 ? 0.0f : (((float) this.totalPRsWithCRSmellAndIncreasedCodeSmell / this.totalPRsWithCRSmell) * 100);
-                crSmellPresenceEffect = crSmellPresenceEffectValue + " %";
+                crSmellPresenceEffect = df.format(crSmellPresenceEffectValue) + " %";
                 return crSmellPresenceEffect;
             }
 
@@ -356,7 +359,7 @@ public class Results {
 
             public String getCrSmellAbsenceEffect() {
                 float crSmellAbsenceEffectValue = this.totalPRsWithNoCRSmell == 0 ? 0.0f : (((float) this.totalPRsWithNoCRSmellAndIncreasedCodeSmell / this.totalPRsWithNoCRSmell) * 100);
-                crSmellAbsenceEffect = crSmellAbsenceEffectValue + " %";
+                crSmellAbsenceEffect = df.format(crSmellAbsenceEffectValue) + " %";
                 return crSmellAbsenceEffect;
             }
 
