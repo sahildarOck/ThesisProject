@@ -1,5 +1,6 @@
 package org.ljmu.thesis.run;
 
+import org.apache.commons.io.FileUtils;
 import org.ljmu.thesis.commons.DateUtils;
 import org.ljmu.thesis.commons.Utils;
 import org.ljmu.thesis.helpers.*;
@@ -13,6 +14,8 @@ import org.ljmu.thesis.model.results.Results;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -130,7 +133,8 @@ public class EndToEndRun {
     }
 
     private static void cleanUp() throws IOException {
-        // TODO: Delete all files
+        // Delete all worktree directories if they exist
+        Files.walk(Paths.get(ConfigHelper.getGitReposProjectPath()), 1).filter(p -> Files.isDirectory(p) && p.getFileName().startsWith("worktree_")).forEach(p -> FileUtils.deleteQuietly(p.toFile()));
 
         // git worktree prune
         GitHelper.pruneWorktree(ConfigHelper.getGitReposProjectPath());
