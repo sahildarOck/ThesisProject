@@ -57,7 +57,7 @@ public class EndToEndRun {
 
     private static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 5);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
@@ -106,15 +106,15 @@ public class EndToEndRun {
                 prUpdated.setMessage(changeRevisionCommitOutput.getMessage().trim());
 
                 // Compute and populate the Code smells difference count
-//                Integer codeSmellsDifferenceCount = getNumberOfNewCodeSmells(prUpdated);
-//                prUpdated.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
-//                prUpdated.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
+                // Integer codeSmellsDifferenceCount = getNumberOfNewCodeSmells(prUpdated);
+                // prUpdated.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
+                // prUpdated.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
 
                 LOGGER.info(String.format("Gerrit calls done for review number: [%d]", pr.getReviewNumber()));
 
             } catch (Exception e) {
                 if (pr != null) {
-                    LOGGER.log(Level.SEVERE, String.format("Failure occurred for review number: [%d]. Details below: ", pr.getReviewNumber()));
+                    LOGGER.log(Level.SEVERE, String.format("Gerrit data fetch failed for review number: [%d]. Details: %s", pr.getReviewNumber(), e.getMessage()));
                 }
                 e.printStackTrace();
             }
@@ -192,12 +192,13 @@ public class EndToEndRun {
             try {
                 codeSmellsDifferenceCount = getNumberOfNewCodeSmells(pr);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                codeSmellsDifferenceCount = null;
+                LOGGER.log(Level.SEVERE, e.getMessage());
             }
             pr.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
             pr.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
 
-            LOGGER.info(String.format("Object updated after Gerrit calls and code smells computation for review number: [%d]", pr.getReviewNumber()));
+            LOGGER.info(String.format("Update done for review number: [%d]", pr.getReviewNumber()));
         });
     }
 
@@ -246,8 +247,8 @@ public class EndToEndRun {
         long endTime = System.currentTimeMillis(); // TODO: Remove
         // Log if issues
         if (!isGitWorktreeCreationSuccessful(false, prRecord.getReviewNumber(), prRecord.getIterationCount(), gitCreateWorktreeProcessOutput)) {
-            LOGGER.log(Level.SEVERE, String.format("gitCreateWorktreeProcessOutput: %s", gitCreateWorktreeProcessOutput));
-            throw new RuntimeException("Git worktree creation process failed...!!!");
+            GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
+            throw new RuntimeException(String.format("Git worktree creation process failed for commitId: [%s]...!!!\ngitCreateWorktreeProcessOutput: %s", prRecord.getBeforeCommitId(), gitCreateWorktreeProcessOutput));
         }
         LOGGER.info(String.format("[%d] Create Worktree took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
 
@@ -264,7 +265,8 @@ public class EndToEndRun {
         endTime = System.currentTimeMillis(); // TODO: Remove
         // Log if issues
         if (!isGitCheckoutSuccessful(gitCheckoutProcessOutput)) {
-            throw new RuntimeException(String.format("Git checkout process failed for commitId:[%s], with checkoutProcessOutput...!!!: %s", prRecord.getBeforeCommitId(), gitCheckoutProcessOutput));
+            GitHelper.removeWorkTree(gitReposProjectPath, workTreeName);
+            throw new RuntimeException(String.format("Git checkout process failed for commitId: [%s]\ncheckoutProcessOutput...!!!: %s", prRecord.getBeforeCommitId(), gitCheckoutProcessOutput));
         }
         LOGGER.info(String.format("[%d] Git checkout took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
 
@@ -282,7 +284,7 @@ public class EndToEndRun {
         endTime = System.currentTimeMillis(); // TODO: Remove
         LOGGER.info(String.format("[%d] Remove Worktree took: [%d] seconds", prRecord.getReviewNumber(), TimeUnit.MILLISECONDS.toSeconds(endTime - startTime))); // TODO: Remove
         if (!isGitRemoveWorktreeSuccessful(removeWorkTreeProcessOutputs, IGNORE_REMOVE_WORKTREE_PROCESS_OUTPUT)) {
-            LOGGER.log(Level.SEVERE, removeWorkTreeProcessOutputs);
+            LOGGER.log(Level.SEVERE, String.format("Git remove worktree failed for commitId: [%s]\nremoveWorkTreeProcessOutputs...!!!: %s", prRecord.getBeforeCommitId(), removeWorkTreeProcessOutputs));
         }
 
         return afterCommitCodeSmellsCount - beforeCommitCodeSmellsCount;
@@ -291,6 +293,9 @@ public class EndToEndRun {
     private static int getCodeSmellsCount(String projectPath, List<String> updatedFileList) {
         return updatedFileList.parallelStream().map(fp -> {
             try {
+                if (!fp.endsWith(".java")) {
+                    return 0;
+                }
                 String outputJson = PmdHelper.startPmdCodeSmellProcessAndGetOutput(projectPath, fp);
                 if (outputJson.contains("No such file")) {
                     return 0;
@@ -298,7 +303,7 @@ public class EndToEndRun {
                 PmdReport report = JsonHelper.getObject(outputJson, PmdReport.class);
                 return Arrays.stream(report.files).map(file -> file.violations.length).reduce(0, (len1, len2) -> len1 + len2);
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, String.format("Failure occurred while running PMD for projectpath: [%s]. Details below: ", projectPath));
+                LOGGER.log(Level.SEVERE, String.format("Failure while running PMD for project path: [%s]. Details: %s", projectPath, e.getMessage()));
                 e.printStackTrace();
                 return 0;
             }
