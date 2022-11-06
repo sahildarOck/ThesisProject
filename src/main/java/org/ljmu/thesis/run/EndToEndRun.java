@@ -134,7 +134,7 @@ public class EndToEndRun {
 
     private static void cleanUp() throws IOException {
         // Delete all worktree directories if they exist
-        Files.walk(Paths.get(ConfigHelper.getGitReposProjectPath()), 1).filter(p -> Files.isDirectory(p) && p.getFileName().startsWith("worktree_")).forEach(p -> FileUtils.deleteQuietly(p.toFile()));
+        Files.walk(Paths.get(ConfigHelper.getGitReposProjectPath()), 1).filter(p -> Files.isDirectory(p) && p.getFileName().toString().startsWith("worktree_")).forEach(p -> FileUtils.deleteQuietly(p.toFile()));
 
         // git worktree prune
         GitHelper.pruneWorktree(ConfigHelper.getGitReposProjectPath());
