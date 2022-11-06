@@ -43,7 +43,7 @@ public class EndToEndRun {
 
     public static void main(String[] args) throws IOException {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "40");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
             FileHandler fh = new FileHandler(ConfigHelper.getOutputDirectoryPath() + "output_" + ConfigHelper.getProjectToRun() + ".log");
             LOGGER.addHandler(fh);
             long start = System.currentTimeMillis();
@@ -226,11 +226,11 @@ public class EndToEndRun {
     }
 
     private static boolean isMissingContextCRSmell(String subject, String message) {
-        if (subject.isEmpty() || message.isEmpty()) {
+        if (subject.trim().isEmpty() || message.trim().isEmpty()) {
             return true;
         }
-        String filteredMessage = message.split("[\n]*Change-Id")[0];
-        return subject.equals(filteredMessage);
+        String filteredMessage = (message.split("[\n]*Change-Id")[0]).replaceAll("\\s*", "");
+        return subject.replaceAll("\\s*", "").equals(filteredMessage);
     }
 
     private static Integer getNumberOfNewCodeSmells(ProcessedPRRecord prRecord) throws IOException {
