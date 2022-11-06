@@ -1,6 +1,6 @@
 {
   "_readMe": "Please update the fields: 'projectToRun' for the project to be run, 'path.pmdBin' for the pmd bin path and 'path.cropDataset' for the path of the CROP_dataset",
-  "projectToRun": "spymemcached",
+  "projectToRun": "couchbase-java-client",
   "path": {
     "pmdBin": "/Users/srivastavas/Downloads/M.Sc./pmd-bin-6.50.0/bin",
     "cropDataset": "/Users/srivastavas/Downloads/M.Sc./datasets/CROP_dataset",
@@ -11,11 +11,11 @@
   },
   "projects": [
     {
-      "name": "couchbase-java-client",
+      "name": "jgit",
       "baseUrl": "https://git.eclipse.org/r"
     },
     {
-      "name": "couchbase-jvm-core",
+      "name": "egit",
       "baseUrl": "https://git.eclipse.org/r"
     },
     {
@@ -23,11 +23,11 @@
       "baseUrl": "https://git.eclipse.org/r"
     },
     {
-      "name": "egit",
+      "name": "couchbase-jvm-core",
       "baseUrl": "https://review.couchbase.org"
     },
     {
-      "name": "jgit",
+      "name": "couchbase-java-client",
       "baseUrl": "https://review.couchbase.org"
     },
     {
