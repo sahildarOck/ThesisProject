@@ -50,6 +50,8 @@ public class EndToEndRun {
             populate();
             long end = System.currentTimeMillis();
             LOGGER.info(String.format("Time taken to finish: [%d] seconds", TimeUnit.MILLISECONDS.toSeconds(end - start)));
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Parent catch block. Exception message below!!!\n" + e.getMessage());
         } finally {
             cleanUp();
         }
@@ -136,7 +138,7 @@ public class EndToEndRun {
 
     private static void cleanUp() throws IOException {
         // Delete all worktree directories if they exist
-        Files.walk(Paths.get(ConfigHelper.getGitReposProjectPath()), 1).filter(p -> Files.isDirectory(p) && p.getFileName().toString().startsWith("worktree_")).forEach(p -> FileUtils.deleteQuietly(p.toFile()));
+        Files.walk(Paths.get(ConfigHelper.getGitReposProjectPath()), 1).filter(p -> Files.isDirectory(p) && p.toFile().exists() && p.getFileName().toString().startsWith("worktree_")).forEach(p -> FileUtils.deleteQuietly(p.toFile()));
 
         // git worktree prune
         GitHelper.pruneWorktree(ConfigHelper.getGitReposProjectPath());
