@@ -43,7 +43,7 @@ public class EndToEndRun {
 
     public static void main(String[] args) throws IOException {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "30");
             FileHandler fh = new FileHandler(ConfigHelper.getOutputDirectoryPath() + "output_" + ConfigHelper.getProjectToRun() + ".log");
             LOGGER.addHandler(fh);
             long start = System.currentTimeMillis();
@@ -57,7 +57,7 @@ public class EndToEndRun {
 
     private static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
         ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
@@ -122,6 +122,8 @@ public class EndToEndRun {
         }).collect(Collectors.toList());
 
         computeAndPopulateCRSmellsInProcessedPRRecords(processedPRRecords, ownerReviewersReviewCountMap, ownerPRCountMap);
+
+        System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
 
         computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
 

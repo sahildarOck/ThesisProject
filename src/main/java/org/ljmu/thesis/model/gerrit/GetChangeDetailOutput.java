@@ -56,9 +56,6 @@ public class GetChangeDetailOutput {
 
     public String getSubmitted() {
         if (submitted == null) {
-            if (updated == null) {
-                return created;
-            }
             return updated;
         }
         return submitted;
