@@ -12,7 +12,8 @@ public class Results {
     private String projectName;
     private int totalPRs;
     private int totalPRsExcludedWithCorruptData;
-    private String percentPRsExcluded;
+    private String percentPRsExcludedWithCorruptData;
+    private int totalPRsIncluded;
 
     private PresenceResults presenceResults;
     private AbsenceResults absenceResults;
@@ -63,85 +64,57 @@ public class Results {
         this.totalPRsExcludedWithCorruptData = totalPRsExcludedWithCorruptData;
     }
 
-    public String getPercentPRsExcluded() {
-        return percentPRsExcluded;
+    public String getPercentPRsExcludedWithCorruptData() {
+        this.percentPRsExcludedWithCorruptData = df.format(this.totalPRs == 0 ? 0.0f : (((float) this.totalPRsExcludedWithCorruptData / this.totalPRs) * 100)) + " %";
+        return this.percentPRsExcludedWithCorruptData;
     }
 
-    public void setPercentPRsExcluded(String percentPRsExcluded) {
-        this.percentPRsExcluded = percentPRsExcluded;
+    public int getTotalPRsIncluded() {
+        return totalPRsIncluded;
     }
 
     public static DecimalFormat getDf() {
         return df;
     }
 
-    public static void setDf(DecimalFormat df) {
-        Results.df = df;
-    }
-
     public PresenceResults getPresenceResults() {
         return presenceResults;
     }
 
-    public void setPresenceResults(PresenceResults presenceResults) {
-        this.presenceResults = presenceResults;
-    }
 
     public AbsenceResults getAbsenceResults() {
         return absenceResults;
     }
 
-    public void setAbsenceResults(AbsenceResults absenceResults) {
-        this.absenceResults = absenceResults;
-    }
 
     public IndividualCRSmellResult getCrSmellLackOfCR() {
         return crSmellLackOfCR;
     }
 
-    public void setCrSmellLackOfCR(IndividualCRSmellResult crSmellLackOfCR) {
-        this.crSmellLackOfCR = crSmellLackOfCR;
-    }
 
     public IndividualCRSmellResult getCrSmellPingPong() {
         return crSmellPingPong;
     }
 
-    public void setCrSmellPingPong(IndividualCRSmellResult crSmellPingPong) {
-        this.crSmellPingPong = crSmellPingPong;
-    }
 
     public IndividualCRSmellResult getCrSmellSleepingReviews() {
         return crSmellSleepingReviews;
-    }
-
-    public void setCrSmellSleepingReviews(IndividualCRSmellResult crSmellSleepingReviews) {
-        this.crSmellSleepingReviews = crSmellSleepingReviews;
     }
 
     public IndividualCRSmellResult getCrSmellMissingContext() {
         return crSmellMissingContext;
     }
 
-    public void setCrSmellMissingContext(IndividualCRSmellResult crSmellMissingContext) {
-        this.crSmellMissingContext = crSmellMissingContext;
-    }
 
     public IndividualCRSmellResult getCrSmellLargeChangesets() {
         return crSmellLargeChangesets;
     }
 
-    public void setCrSmellLargeChangesets(IndividualCRSmellResult crSmellLargeChangesets) {
-        this.crSmellLargeChangesets = crSmellLargeChangesets;
-    }
 
     public IndividualCRSmellResult getCrSmellReviewBuddies() {
         return crSmellReviewBuddies;
     }
 
-    public void setCrSmellReviewBuddies(IndividualCRSmellResult crSmellReviewBuddies) {
-        this.crSmellReviewBuddies = crSmellReviewBuddies;
-    }
 
     public static Results computeResults(List<ProcessedPRRecord> prRecords) throws IOException {
         Results results = new Results();
@@ -154,9 +127,10 @@ public class Results {
 
             if (null == pr.getCodeSmellsDifferenceCount()) {
                 results.totalPRsExcludedWithCorruptData++;
+                continue;
             }
 
-            results.percentPRsExcluded = df.format(results.totalPRs == 0 ? 0.0f : (((float) results.totalPRsExcludedWithCorruptData / results.totalPRs) * 100)) + " %";
+            results.totalPRsIncluded++;
 
             if (pr.hasAtLeastOneCRSmell()) { // At least 1 CR Smell
                 results.presenceResults.totalPRsWithAtLeastOneCRSmell++;
