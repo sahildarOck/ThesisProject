@@ -43,7 +43,7 @@ public class EndToEndRun {
 
     public static void main(String[] args) throws IOException {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "30");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
             FileHandler fh = new FileHandler(ConfigHelper.getOutputDirectoryPath() + "output_" + ConfigHelper.getProjectToRun() + ".log");
             LOGGER.addHandler(fh);
             long start = System.currentTimeMillis();
@@ -61,8 +61,8 @@ public class EndToEndRun {
         //  1. Get all RawPRRecords
         List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
-        ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
-        ConcurrentHashMap<String, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
+        ConcurrentHashMap<Long, ConcurrentHashMap<Long, Integer>> ownerReviewersReviewCountMap = new ConcurrentHashMap<>();
+        ConcurrentHashMap<Long, Integer> ownerPRCountMap = new ConcurrentHashMap<>();
 
         populateExistingFieldsInProcessedPRRecordsFromRawPRRecords(rawPRRecords, processedPRRecords);
 
@@ -85,21 +85,21 @@ public class EndToEndRun {
                 //  vi. Populate the fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
 
                 //  vi.a. Init/Update ownerReviewersReviewCountMap
-                String owner = changeDetailOutput.getOwner().getName();
-                List<String> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, owner); // TODO: Update to private fields
-                ConcurrentHashMap<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(owner) ? ownerReviewersReviewCountMap.get(owner) : new ConcurrentHashMap<>();
+                long ownerAccountId = changeDetailOutput.getOwner().get_account_id();
+                List<Long> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, ownerAccountId); // TODO: Update to private fields
+                ConcurrentHashMap<Long, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(ownerAccountId) ? ownerReviewersReviewCountMap.get(ownerAccountId) : new ConcurrentHashMap<>();
                 filteredReviewersList.forEach(r -> {
                     int reviewerForThisAuthorReviewCount = reviewersReviewCountMap.containsKey(r) ? reviewersReviewCountMap.get(r) : 0;
                     reviewersReviewCountMap.put(r, reviewerForThisAuthorReviewCount + 1);
                 });
-                ownerReviewersReviewCountMap.put(owner, reviewersReviewCountMap);
+                ownerReviewersReviewCountMap.put(ownerAccountId, reviewersReviewCountMap);
 
                 //  vi.b. Init/Update authorReviewCountMap
-                int ownerReviewCount = ownerPRCountMap.containsKey(owner) ? ownerPRCountMap.get(owner) : 0;
-                ownerPRCountMap.put(owner, ownerReviewCount + 1);
+                int ownerReviewCount = ownerPRCountMap.containsKey(ownerAccountId) ? ownerPRCountMap.get(ownerAccountId) : 0;
+                ownerPRCountMap.put(ownerAccountId, ownerReviewCount + 1);
 
                 //  vi.c. Populate other fetched fields for OutputPRRecord from GetChangeDetailOutput and GetChangeRevisionCommitOutput
-                prUpdated.setOwner(owner);
+                prUpdated.setOwnerAccountId(ownerAccountId);
                 prUpdated.setReviewersList(filteredReviewersList);
                 prUpdated.setCreatedDate(DateUtils.getDate(changeDetailOutput.getCreated()));
                 prUpdated.setMergedDate(DateUtils.getDate(changeDetailOutput.getSubmitted()));
@@ -169,7 +169,7 @@ public class EndToEndRun {
         }
     }
 
-    private static void computeAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords, ConcurrentHashMap<String, ConcurrentHashMap<String, Integer>> ownerReviewersReviewCountMap, ConcurrentHashMap<String, Integer> ownerPRCountMap) {
+    private static void computeAndPopulateCRSmellsInProcessedPRRecords(List<ProcessedPRRecord> processedPRRecords, ConcurrentHashMap<Long, ConcurrentHashMap<Long, Integer>> ownerReviewersReviewCountMap, ConcurrentHashMap<Long, Integer> ownerPRCountMap) {
         processedPRRecords.parallelStream().forEach(pr -> {
             //  vii. Derive the CRSmells derived fields and populate them for OutputPRRecord
             pr.setCrSmellLackOfCR(pr.getReviewersList().isEmpty());
@@ -179,11 +179,11 @@ public class EndToEndRun {
             pr.setCrSmellLargeChangesets(pr.getLocChanged() > LOC_CHANGED_THRESHOLD);
 
             //  Deriving review_buddies_cr_smell
-            int ownerPRCount = ownerPRCountMap.get(pr.getOwner());
+            int ownerPRCount = ownerPRCountMap.get(pr.getOwnerAccountId());
             if (ownerPRCount < REVIEW_BUDDIES_TOTAL_PRS_BY_AUTHOR_THRESHOLD) {
                 return;
             }
-            ConcurrentHashMap<String, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.get(pr.getOwner());
+            ConcurrentHashMap<Long, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.get(pr.getOwnerAccountId());
             boolean reviewBuddiesCRSmell = pr.getReviewersList().stream().anyMatch(r -> reviewersReviewCountMap.get(r) > ownerPRCount / 2);
             pr.setCrSmellReviewBuddies(reviewBuddiesCRSmell);
         });
@@ -195,7 +195,7 @@ public class EndToEndRun {
             Integer codeSmellsDifferenceCount = null;
             try {
                 codeSmellsDifferenceCount = getNumberOfNewCodeSmells(pr);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 codeSmellsDifferenceCount = null;
                 LOGGER.log(Level.SEVERE, e.getMessage());
             }
@@ -220,13 +220,13 @@ public class EndToEndRun {
         return updatedFiles;
     }
 
-    private static List<String> getFilteredReviewersList(Developer[] reviewers, String ownerName) {
+    private static List<Long> getFilteredReviewersList(Developer[] reviewers, long ownerAccountId) {
         if (reviewers == null) {
             return new ArrayList<>();
         }
         return Arrays.stream(reviewers)
-                .filter(r -> !IGNORE_REVIEWERS_LIST.contains(r.getName()) && !ownerName.equals(r.getName()))
-                .map(r -> r.getName()).collect(Collectors.toList());
+                .filter(r -> !IGNORE_REVIEWERS_LIST.contains(r.get_account_id()) && ownerAccountId != r.get_account_id())
+                .map(r -> r.get_account_id()).collect(Collectors.toList());
     }
 
     private static boolean isMissingContextCRSmell(String subject, String message) {

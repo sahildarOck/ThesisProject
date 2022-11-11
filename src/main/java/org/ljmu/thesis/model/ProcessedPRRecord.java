@@ -15,8 +15,8 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
     // Fetched
     private List<String> updatedFilesList; // Let's use ':' as delimiter within the String to separate items
     private boolean atLeastOneUpdatedJavaFile;
-    private String owner;
-    private List<String> reviewersList; // Let's use ':' as delimiter within the String to separate items
+    private Long ownerAccountId;
+    private List<Long> reviewersList; // Let's use ':' as delimiter within the String to separate items
     private LocalDate createdDate;
     private LocalDate mergedDate;
     private int locChanged;
@@ -99,19 +99,19 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.atLeastOneUpdatedJavaFile = atLeastOneUpdatedJavaFile;
     }
 
-    public String getOwner() {
-        return owner;
+    public Long getOwnerAccountId() {
+        return ownerAccountId;
     }
 
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setOwnerAccountId(Long ownerAccountId) {
+        this.ownerAccountId = ownerAccountId;
     }
 
-    public List<String> getReviewersList() {
+    public List<Long> getReviewersList() {
         return reviewersList;
     }
 
-    public void setReviewersList(List<String> reviewersList) {
+    public void setReviewersList(List<Long> reviewersList) {
         this.reviewersList = reviewersList;
     }
 
@@ -218,7 +218,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         return crSmellLackOfCR || crSmellPingPong || crSmellSleepingReviews || crSmellMissingContext || crSmellLargeChangesets || crSmellReviewBuddies;
     }
 
-    public int getCodeSmellsDifferenceCount() {
+    public Integer getCodeSmellsDifferenceCount() {
         return codeSmellsDifferenceCount;
     }
 
