@@ -11,6 +11,8 @@ public class Results {
 
     private String projectName;
     private int totalPRs;
+    private int totalPRsExcludedWithCorruptData;
+    private String percentPRsExcluded;
 
     private PresenceResults presenceResults;
     private AbsenceResults absenceResults;
@@ -51,6 +53,30 @@ public class Results {
 
     public void setTotalPRs(int totalPRs) {
         this.totalPRs = totalPRs;
+    }
+
+    public int getTotalPRsExcludedWithCorruptData() {
+        return totalPRsExcludedWithCorruptData;
+    }
+
+    public void setTotalPRsExcludedWithCorruptData(int totalPRsExcludedWithCorruptData) {
+        this.totalPRsExcludedWithCorruptData = totalPRsExcludedWithCorruptData;
+    }
+
+    public String getPercentPRsExcluded() {
+        return percentPRsExcluded;
+    }
+
+    public void setPercentPRsExcluded(String percentPRsExcluded) {
+        this.percentPRsExcluded = percentPRsExcluded;
+    }
+
+    public static DecimalFormat getDf() {
+        return df;
+    }
+
+    public static void setDf(DecimalFormat df) {
+        Results.df = df;
     }
 
     public PresenceResults getPresenceResults() {
@@ -125,6 +151,12 @@ public class Results {
                 continue;
             }
             results.totalPRs++;
+
+            if (null == pr.getCodeSmellsDifferenceCount()) {
+                results.totalPRsExcludedWithCorruptData++;
+            }
+
+            results.percentPRsExcluded = df.format(results.totalPRs == 0 ? 0.0f : (((float) results.totalPRsExcludedWithCorruptData / results.totalPRs) * 100)) + " %";
 
             if (pr.hasAtLeastOneCRSmell()) { // At least 1 CR Smell
                 results.presenceResults.totalPRsWithAtLeastOneCRSmell++;
