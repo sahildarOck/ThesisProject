@@ -43,7 +43,8 @@ public class EndToEndRun {
 
     public static void main(String[] args) throws IOException {
         try {
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
+            cleanUp();
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "30");
             FileHandler fh = new FileHandler(ConfigHelper.getOutputDirectoryPath() + "output_" + ConfigHelper.getProjectToRun() + ".log");
             LOGGER.addHandler(fh);
             long start = System.currentTimeMillis();
