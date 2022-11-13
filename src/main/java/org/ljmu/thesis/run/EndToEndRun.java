@@ -44,7 +44,7 @@ public class EndToEndRun {
     public static void main(String[] args) throws IOException {
         try {
             cleanUp();
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "30");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
             FileHandler fh = new FileHandler(ConfigHelper.getOutputDirectoryPath() + "output_" + ConfigHelper.getProjectToRun() + ".log");
             LOGGER.addHandler(fh);
             long start = System.currentTimeMillis();
@@ -60,9 +60,9 @@ public class EndToEndRun {
 
     private static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
 
-//        List<Integer> reviewNumbersToInclude = Arrays.asList(); // TODO: TEMP: Remove after debugging
+//        List<Integer> reviewNumbersToInclude = Arrays.asList(20675, 22990, 23989, 26345, 26565, 27919, 28037, 28051, 28500, 28502, 60414); // TODO: TEMP: Remove after debugging
 //        rawPRRecords.removeIf(r -> !reviewNumbersToInclude.contains(r.getReviewNumber())); // TODO: TEMP: Remove after debugging
 
         List<ProcessedPRRecord> processedPRRecords = new ArrayList<>();
@@ -79,9 +79,9 @@ public class EndToEndRun {
                 prUpdated = (ProcessedPRRecord) pr.clone();
 
                 //  iv. Hit Gerrit endpoints to get the updated files details
-                List<String> updatedFilesList = getUpdatedFilesList(pr.getReviewNumber(), pr.getIterationCount());
+                List<String> updatedFilesList = getUpdatedFilesList(pr.getReviewNumber(), pr.getIterationCount()).parallelStream().filter(f -> f.contains(".java")).collect(Collectors.toList());
                 prUpdated.setUpdatedFilesList(updatedFilesList);
-                prUpdated.setAtLeastOneUpdatedJavaFile(updatedFilesList.parallelStream().anyMatch(f -> f.contains(".java")));
+                prUpdated.setAtLeastOneUpdatedJavaFile(!updatedFilesList.isEmpty());
 
                 //  v. Hit Gerrit endpoints and fetch GetChangeDetailOutput and GetChangeRevisionCommitOutput
                 GetChangeDetailOutput changeDetailOutput = JsonHelper.getObject(GerritApiHelper.getChangeDetail(pr.getReviewNumber()), GetChangeDetailOutput.class);
