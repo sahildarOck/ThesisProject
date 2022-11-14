@@ -243,7 +243,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId,
                 String.valueOf(atLeastOneUpdatedJavaFile), createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
                 subject, message, String.valueOf(crSmellLackOfCR), String.valueOf(crSmellPingPong), String.valueOf(crSmellSleepingReviews), String.valueOf(crSmellMissingContext),
-                String.valueOf(crSmellLargeChangesets), String.valueOf(crSmellReviewBuddies), String.valueOf(getCrSmellsCount()),
+                String.valueOf(crSmellLargeChangesets), String.valueOf(crSmellReviewBuddies),
                 getStringOutput(codeSmellsDifferenceCount), getStringOutput(codeSmellsIncreased)};
         return records;
     }

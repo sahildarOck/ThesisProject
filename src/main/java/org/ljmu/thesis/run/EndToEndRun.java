@@ -60,7 +60,7 @@ public class EndToEndRun {
 
     private static void populate() throws IOException {
         //  1. Get all RawPRRecords
-        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords().subList(0, 30);
+        List<RawPRRecord> rawPRRecords = CsvHelper.getMergedRawPRRecords();
 
 //        List<Integer> reviewNumbersToInclude = Arrays.asList(20675, 22990, 23989, 26345, 26565, 27919, 28037, 28051, 28500, 28502, 60414); // TODO: TEMP: Remove after debugging
 //        rawPRRecords.removeIf(r -> !reviewNumbersToInclude.contains(r.getReviewNumber())); // TODO: TEMP: Remove after debugging
@@ -135,7 +135,6 @@ public class EndToEndRun {
         computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
 
         String results = JsonHelper.getJsonPrettyString(Results.computeResults(processedPRRecords));
-        System.out.println(results);
         LOGGER.info(results);
 
         CsvHelper.writeOutputCsv(processedPRRecords);
