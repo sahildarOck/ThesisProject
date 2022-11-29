@@ -134,84 +134,84 @@ public class Results {
 
             if (pr.hasAtLeastOneCRSmell()) { // At least 1 CR Smell
                 results.presenceResults.totalPRsWithAtLeastOneCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) { // At least 1 CR Smell > Has Code Smells increased
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) { // At least 1 CR Smell > Has Code Smells increased
                     results.presenceResults.totalPRsWithAtLeastOneCRSmellAndIncreasedCodeSmell++;
                 }
             } else { // No CR Smell
                 results.absenceResults.totalPRsWithNoCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) { // No CR Smell > Has Code Smells increased
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) { // No CR Smell > Has Code Smells increased
                     results.absenceResults.totalPRsWithNoCRSmellAndIncreasedCodeSmell++;
                 }
             }
 
             if (pr.hasCrSmellLackOfCR()) {
                 results.crSmellLackOfCR.presenceResults.totalPRsWithCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellLackOfCR.presenceResults.totalPRsWithCRSmellAndIncreasedCodeSmell++;
                 }
             } else {
                 results.crSmellLackOfCR.absenceResults.totalPRsWithNoCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellLackOfCR.absenceResults.totalPRsWithNoCRSmellAndIncreasedCodeSmell++;
                 }
             }
 
             if (pr.hasCrSmellPingPong()) {
                 results.crSmellPingPong.presenceResults.totalPRsWithCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellPingPong.presenceResults.totalPRsWithCRSmellAndIncreasedCodeSmell++;
                 }
             } else {
                 results.crSmellPingPong.absenceResults.totalPRsWithNoCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellPingPong.absenceResults.totalPRsWithNoCRSmellAndIncreasedCodeSmell++;
                 }
             }
 
             if (pr.hasCrSmellSleepingReviews()) {
                 results.crSmellSleepingReviews.presenceResults.totalPRsWithCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellSleepingReviews.presenceResults.totalPRsWithCRSmellAndIncreasedCodeSmell++;
                 }
             } else {
                 results.crSmellSleepingReviews.absenceResults.totalPRsWithNoCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellSleepingReviews.absenceResults.totalPRsWithNoCRSmellAndIncreasedCodeSmell++;
                 }
             }
 
             if (pr.hasCrSmellMissingContext()) {
                 results.crSmellMissingContext.presenceResults.totalPRsWithCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellMissingContext.presenceResults.totalPRsWithCRSmellAndIncreasedCodeSmell++;
                 }
             } else {
                 results.crSmellMissingContext.absenceResults.totalPRsWithNoCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellMissingContext.absenceResults.totalPRsWithNoCRSmellAndIncreasedCodeSmell++;
                 }
             }
 
             if (pr.hasCrSmellLargeChangesets()) {
                 results.crSmellLargeChangesets.presenceResults.totalPRsWithCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellLargeChangesets.presenceResults.totalPRsWithCRSmellAndIncreasedCodeSmell++;
                 }
             } else {
                 results.crSmellLargeChangesets.absenceResults.totalPRsWithNoCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellLargeChangesets.absenceResults.totalPRsWithNoCRSmellAndIncreasedCodeSmell++;
                 }
             }
 
             if (pr.hasCrSmellReviewBuddies()) {
                 results.crSmellReviewBuddies.presenceResults.totalPRsWithCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellReviewBuddies.presenceResults.totalPRsWithCRSmellAndIncreasedCodeSmell++;
                 }
             } else {
                 results.crSmellReviewBuddies.absenceResults.totalPRsWithNoCRSmell++;
-                if (Boolean.TRUE.equals(pr.getCodeSmellsIncreased())) {
+                if (Boolean.TRUE.equals(pr.getIsIncreased())) {
                     results.crSmellReviewBuddies.absenceResults.totalPRsWithNoCRSmellAndIncreasedCodeSmell++;
                 }
             }

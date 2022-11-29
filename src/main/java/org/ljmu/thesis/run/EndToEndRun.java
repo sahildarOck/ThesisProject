@@ -30,7 +30,7 @@ import static org.ljmu.thesis.helpers.GitHelper.*;
 
 public class EndToEndRun {
     private static final Logger LOGGER = Logger.getLogger(EndToEndRun.class.getName());
-    private static final List<String> IGNORE_REVIEWERS_LIST = Arrays.asList("CI Bot", "Eclipse Genie", "Gerrit Code Review @ Eclipse.org");
+    private static final List<String> EXCLUDE_REVIEWERS_LIST = Arrays.asList("CI Bot", "Eclipse Genie", "Gerrit Code Review @ Eclipse.org");
     private static final int PING_PONG_THRESHOLD = 3;
     private static final int SLEEPING_REVIEW_THRESHOLD = 2;
     private static final int LOC_CHANGED_THRESHOLD = 500;
@@ -44,7 +44,7 @@ public class EndToEndRun {
     public static void main(String[] args) throws IOException {
         try {
             cleanUp();
-            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
+            System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "15");
             FileHandler fh = new FileHandler(ConfigHelper.getOutputDirectoryPath() + "output_" + ConfigHelper.getProjectToRun() + ".log");
             LOGGER.addHandler(fh);
             long start = System.currentTimeMillis();
@@ -91,7 +91,7 @@ public class EndToEndRun {
 
                 //  vi.a. Init/Update ownerReviewersReviewCountMap
                 long ownerAccountId = changeDetailOutput.getOwner().get_account_id();
-                List<Long> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, ownerAccountId); // TODO: Update to private fields
+                List<Long> filteredReviewersList = getFilteredReviewersList(changeDetailOutput.reviewers.REVIEWER, ownerAccountId);
                 ConcurrentHashMap<Long, Integer> reviewersReviewCountMap = ownerReviewersReviewCountMap.containsKey(ownerAccountId) ? ownerReviewersReviewCountMap.get(ownerAccountId) : new ConcurrentHashMap<>();
                 filteredReviewersList.forEach(r -> {
                     int reviewerForThisAuthorReviewCount = reviewersReviewCountMap.containsKey(r) ? reviewersReviewCountMap.get(r) : 0;
@@ -132,7 +132,7 @@ public class EndToEndRun {
 
         System.setProperty("java.util.concurrent.ForkJoinPool.common.parallelism", "10");
 
-        computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
+//        computeAndPopulateCodeSmellsInProcessedPRRecords(processedPRRecords);
 
         String results = JsonHelper.getJsonPrettyString(Results.computeResults(processedPRRecords));
         LOGGER.info(results);
@@ -182,7 +182,7 @@ public class EndToEndRun {
             pr.setCrSmellMissingContext(isMissingContextCRSmell(pr.getSubject(), pr.getMessage()));
             pr.setCrSmellLargeChangesets(pr.getLocChanged() > LOC_CHANGED_THRESHOLD);
 
-            //  Deriving review_buddies_cr_smell
+            //  Determining review_buddies_cr_smell
             int ownerPRCount = ownerPRCountMap.get(pr.getOwnerAccountId());
             if (ownerPRCount < REVIEW_BUDDIES_TOTAL_PRS_BY_AUTHOR_THRESHOLD) {
                 return;
@@ -204,7 +204,7 @@ public class EndToEndRun {
                 LOGGER.log(Level.SEVERE, e.getMessage());
             }
             pr.setCodeSmellsDifferenceCount(codeSmellsDifferenceCount);
-            pr.setCodeSmellsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
+            pr.setIsIncreased(codeSmellsDifferenceCount != null ? codeSmellsDifferenceCount > 0 : null);
 
             LOGGER.info(String.format("Update done for review number: [%d]", pr.getReviewNumber()));
         });
@@ -229,7 +229,7 @@ public class EndToEndRun {
             return new ArrayList<>();
         }
         return Arrays.stream(reviewers)
-                .filter(r -> !IGNORE_REVIEWERS_LIST.contains(r.get_account_id()) && ownerAccountId != r.get_account_id())
+                .filter(r -> !EXCLUDE_REVIEWERS_LIST.contains(r.getName()) && ownerAccountId != r.get_account_id())
                 .map(r -> r.get_account_id()).collect(Collectors.toList());
     }
 

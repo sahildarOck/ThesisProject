@@ -33,7 +33,7 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
 
     // Computed during Code Smell execution
     private Integer codeSmellsDifferenceCount;
-    private Boolean codeSmellsIncreased;
+    private Boolean isIncreased;
 
     public int getReviewNumber() {
         return reviewNumber;
@@ -226,25 +226,29 @@ public class ProcessedPRRecord implements WritableCsv, Cloneable {
         this.codeSmellsDifferenceCount = codeSmellsDifferenceCount;
     }
 
-    public Boolean getCodeSmellsIncreased() {
-        return codeSmellsIncreased;
+    public Boolean getIsIncreased() {
+        return isIncreased;
     }
 
-    public void setCodeSmellsIncreased(Boolean codeSmellsIncreased) {
-        this.codeSmellsIncreased = codeSmellsIncreased;
+    public void setIsIncreased(Boolean isIncreased) {
+        this.isIncreased = isIncreased;
     }
 
     private String getStringOutput(Object obj) {
         return obj == null ? "NA" : String.valueOf(obj);
     }
 
+    private String getBooleanAsNumber(boolean val) {
+        return val == true ? "1" : "0";
+    }
+
     @Override
     public String[] getRecords() {
         String[] records = {String.valueOf(reviewNumber), changeId, url, String.valueOf(iterationCount), beforeCommitId, afterCommitId,
-                String.valueOf(atLeastOneUpdatedJavaFile), createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
-                subject, message, String.valueOf(crSmellLackOfCR), String.valueOf(crSmellPingPong), String.valueOf(crSmellSleepingReviews), String.valueOf(crSmellMissingContext),
-                String.valueOf(crSmellLargeChangesets), String.valueOf(crSmellReviewBuddies),
-                getStringOutput(codeSmellsDifferenceCount), getStringOutput(codeSmellsIncreased)};
+                getBooleanAsNumber(atLeastOneUpdatedJavaFile), createdDate.toString(), mergedDate.toString(), String.valueOf(locChanged),
+                subject, message, getBooleanAsNumber(crSmellLackOfCR), getBooleanAsNumber(crSmellPingPong), getBooleanAsNumber(crSmellSleepingReviews), getBooleanAsNumber(crSmellMissingContext),
+                getBooleanAsNumber(crSmellLargeChangesets), getBooleanAsNumber(crSmellReviewBuddies), getBooleanAsNumber(getCrSmellsCount() > 0),
+                getStringOutput(codeSmellsDifferenceCount), getStringOutput(isIncreased)};
         return records;
     }
 

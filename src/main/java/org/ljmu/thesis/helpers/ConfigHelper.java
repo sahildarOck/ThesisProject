@@ -35,6 +35,10 @@ public class ConfigHelper {
         return config.getPath().getOutputDirectory() + File.separator;
     }
 
+    public static String getCsvOutputDirectoryPath() throws IOException {
+        return getOutputDirectoryPath() + "csv" + File.separator;
+    }
+
     public static String getProjectToRun() throws IOException {
         Config config = getConfig();
         return config.getProjectToRun();

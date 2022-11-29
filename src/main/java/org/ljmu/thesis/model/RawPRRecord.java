@@ -6,7 +6,6 @@ public class RawPRRecord {
     private String id;
     private int reviewNumber;
     private int revisionNumber;
-    private String author;
     private Status status;
     private String changeId;
     private String url;
@@ -35,14 +34,6 @@ public class RawPRRecord {
 
     public void setRevisionNumber(int revisionNumber) {
         this.revisionNumber = revisionNumber;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
     }
 
     public Status getStatus() {
